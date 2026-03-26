@@ -2,445 +2,464 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Urban Dog: Street King (Híbrido)</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Urban Dog: Street King</title>
+    
+    <!-- Etiquetas PWA para pantalla completa en móviles -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0a0a0c">
 
-        * {
-            box-sizing: border-box;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            outline: none;
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@700&display=swap');
+
+        :root {
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+            --ui-gold: #f1c40f;
+            --ui-red: #e74c3c;
+            --ui-blue: #3498db;
         }
 
-        body {
-            margin: 0;
-            background: #0a0a0c;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            font-family: 'Press Start 2P', cursive;
-            color: white;
-            overflow: hidden;
+        * { 
+            box-sizing: border-box; 
+            -webkit-touch-callout: none; 
+            -webkit-user-select: none; 
+            user-select: none; 
+            outline: none; 
+        }
+        
+        body { 
+            margin: 0; 
+            background: #0a0a0c; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            font-family: 'Quicksand', sans-serif; 
+            color: white; 
+            overflow: hidden; 
             touch-action: none;
         }
 
-        #game-container {
+        #game-wrapper {
             position: relative;
-            width: 100vw;
-            height: 56.25vw; /* 16:9 */
-            max-height: 65vh;
-            max-width: 115vh;
-            background: #1e272e;
-            border: 4px solid #333;
-            overflow: hidden;
-        }
-
-        canvas {
             width: 100%;
             height: 100%;
-            display: block;
-            image-rendering: pixelated;
-        }
-
-        /* Pantallas de Estado */
-        .overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            text-align: center;
+            background: #111;
+        }
+
+        #game-container { 
+            position: relative; 
+            flex-grow: 1;
+            background: #1e272e; 
+            overflow: hidden; 
+        }
+
+        canvas { 
+            width: 100%; 
+            height: 100%; 
+            display: block; 
+            image-rendering: auto;
+        }
+        
+        /* Pantallas de selección y Game Over */
+        .overlay { 
+            position: absolute; 
+            inset: 0; 
+            background: rgba(0,0,0,0.95); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 100; 
+            text-align: center; 
             padding: 20px;
         }
 
-        .overlay h1 { color: #f1c40f; font-size: 24px; margin-bottom: 20px; }
-        .overlay p { font-size: 10px; line-height: 1.8; color: #bdc3c7; }
-        .blink { animation: blinker 1s linear infinite; color: white; margin-top: 20px; font-size: 12px; }
-        @keyframes blinker { 50% { opacity: 0; } }
-
-        .hud {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 8px;
-            pointer-events: none;
-            z-index: 10;
+        .char-select { 
+            display: flex; 
+            gap: 15px; 
+            margin-top: 20px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
         }
 
-        .stat {
-            background: rgba(0,0,0,0.7);
-            padding: 8px;
-            border: 1px solid #555;
-            min-width: 80px;
+        .char-card { 
+            background: #2c3e50; 
+            padding: 15px; 
+            border-radius: 20px; 
+            border: 4px solid #444; 
+            cursor: pointer; 
+            transition: transform 0.2s, border-color 0.2s; 
+            width: 160px; 
         }
 
-        /* Controles */
-        .controls {
-            width: 100%;
-            max-width: 800px;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
+        .char-card:active { transform: scale(0.95); }
+        .char-card:hover { border-color: var(--ui-gold); }
+        .char-card img { width: 100px; height: 100px; border-radius: 15px; margin-bottom: 10px; pointer-events: none; object-fit: contain; background: #161a1d; }
+        
+        /* HUD Superior */
+        .hud { 
+            position: absolute; 
+            top: calc(15px + var(--safe-top)); 
+            left: 15px; 
+            right: 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 14px; 
+            pointer-events: none; 
+            z-index: 50; 
+        }
+
+        .stat-box { 
+            background: rgba(0,0,0,0.7); 
+            padding: 10px 15px; 
+            border-radius: 12px; 
+            border: 2px solid rgba(255,255,255,0.1); 
+            text-align: center;
+        }
+
+        #boss-ui { 
+            position: absolute; 
+            top: 100px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 70%; 
+            display: none; 
+            text-align: center; 
+        }
+
+        .hp-bar { height: 12px; background: #333; border: 2px solid #fff; border-radius: 6px; margin-top: 5px; overflow: hidden; }
+        #hp-fill { height: 100%; background: var(--ui-red); width: 100%; transition: width 0.3s; }
+        
+        /* Controles móviles */
+        .controls-panel { 
+            width: 100%; 
+            padding: calc(10px + var(--safe-bottom)) 20px 20px 20px;
+            display: flex; 
+            justify-content: space-between; 
             align-items: center;
             background: #161a1d;
+            border-top: 4px solid #222;
         }
 
-        /* Ocultar botones en Desktop si se desea, pero mejor dejarlos por accesibilidad táctil */
-        @media (min-width: 1024px) {
-            .controls-hint-desktop { display: block; font-size: 8px; color: #555; margin-top: 10px; }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .action-btns { display: flex; gap: 15px; }
+
+        .btn-ui { 
+            width: 70px; 
+            height: 70px; 
+            background: #34495e; 
+            border: none; 
+            border-radius: 20px; 
+            color: white; 
+            font-size: 24px; 
+            box-shadow: 0 6px 0 #1b2631; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
         }
 
-        .d-pad { display: grid; grid-template-columns: repeat(3, 50px); gap: 8px; }
-        .action-pad { display: flex; gap: 12px; }
-
-        .btn {
-            width: 50px;
-            height: 50px;
-            background: #34495e;
-            border: 3px solid #2c3e50;
-            border-bottom-width: 6px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            color: #ecf0f1;
-            cursor: pointer;
+        .btn-ui:active { 
+            transform: translateY(4px); 
+            box-shadow: 0 2px 0 #1b2631;
+            background: #4a627a;
         }
 
-        .btn:active {
-            transform: translateY(3px);
-            border-bottom-width: 3px;
-        }
+        .btn-action { width: 85px; height: 85px; border-radius: 50%; font-weight: bold; font-size: 16px; }
+        .btn-pee { background: var(--ui-gold); color: #000; box-shadow: 0 6px 0 #a68b0a; }
+        .btn-bite { background: var(--ui-red); box-shadow: 0 6px 0 #922b21; }
+        .btn-jump { background: var(--ui-blue); box-shadow: 0 6px 0 #21618c; }
 
-        .btn-yellow { background: #f1c40f; border-color: #d35400; color: #000; }
-        .btn-red { background: #e74c3c; border-color: #c0392b; }
-        .btn-blue { background: #3498db; border-color: #2980b9; }
-
-        .btn-label { font-size: 7px; margin-top: 4px; color: #7f8fa6; text-align: center; text-transform: uppercase; }
-
+        .record-info { font-size: 14px; color: var(--ui-gold); margin-top: 10px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="hud">
-        <div class="stat">PTS:<br><span id="ui-score">000</span></div>
-        <div class="stat">VIDAS:<br><span id="ui-lives">3</span></div>
-        <div class="stat">SALUD:<br><span id="ui-health">❤❤❤</span></div>
-    </div>
-
-    <!-- Pantalla de Inicio -->
-    <div id="start-screen" class="overlay">
-        <h1>URBAN DOG</h1>
-        <p>MARCA TU TERRITORIO EN LA CIUDAD</p>
-        <div style="margin: 20px 0; border: 2px solid #555; padding: 10px; font-size: 8px; text-align: left;">
-            Puntos: Orina bolsas (↓) +5<br>
-            Huesos: Salud o +10 Puntos<br>
-            Vidas: 100 Puntos = Extra Vida
-        </div>
-        <div class="blink">CLICK O TAP PARA EMPEZAR</div>
-    </div>
-
-    <div id="game-container">
-        <canvas id="game"></canvas>
-    </div>
-
-    <div class="controls">
-        <div class="d-pad">
-            <div style="grid-column: 2"><button class="btn" id="btnUp">↑</button></div>
-            <div><button class="btn" id="btnLeft">←</button></div>
-            <div><button class="btn btn-yellow" id="btnDown">💧</button></div>
-            <div><button class="btn" id="btnRight">→</button></div>
-        </div>
-        
-        <div class="action-pad">
-            <div>
-                <button class="btn btn-red" id="btnBite">Z</button>
-                <div class="btn-label">MORDER</div>
+    <div id="game-wrapper">
+        <!-- Pantalla Inicial -->
+        <div id="start-screen" class="overlay">
+            <h1 style="color: var(--ui-gold); font-size: 36px; margin-bottom: 5px;">URBAN DOG</h1>
+            <p style="color: #aaa; margin-bottom: 10px;">SELECCIONA TU HÉROE</p>
+            
+            <div class="record-info">
+                🏆 RÉCORD: <span id="high-score">0</span> | BARRIO MÁX: <span id="max-level">1</span>
             </div>
-            <div>
-                <button class="btn btn-blue" id="btnJump">A</button>
-                <div class="btn-label">SALTAR</div>
+
+            <div class="char-select">
+                <div class="char-card" onclick="selectChar('zorro')">
+                    <img src="https://www.autosprite.io/api/files/spritesheets/xw2v7gosl3oc7fvzwd26f5/sheet" alt="Zorro" crossorigin="anonymous">
+                    <div>ZORRO</div>
+                    <small style="color: var(--ui-gold);">VELOCIDAD +++</small>
+                </div>
+                <div class="char-card" onclick="selectChar('dali')">
+                    <img src="https://www.autosprite.io/api/files/spritesheets/8azjvq5sdxmct8jt5tgxjs/sheet" alt="Dalí" crossorigin="anonymous">
+                    <div>DALÍ</div>
+                    <small style="color: var(--ui-blue);">SALTO +++</small>
+                </div>
+            </div>
+            <p style="font-size: 10px; color: #777; margin-top: 15px;">Cargando sprites de AutoSprite.io...</p>
+        </div>
+
+        <!-- Game Over -->
+        <div id="game-over-screen" class="overlay" style="display:none;">
+            <h1 style="color: var(--ui-red); font-size: 42px;">¡HAS CAÍDO!</h1>
+            <button class="btn-ui" style="width: 220px; height: 60px;" onclick="location.reload()">REINTENTAR</button>
+        </div>
+
+        <div id="game-container">
+            <div class="hud">
+                <div class="stat-box">BARRIO: <span id="ui-level">1</span><br>PTS: <span id="ui-score">000</span></div>
+                <div class="stat-box">SALUD<br><span id="ui-health">❤❤❤</span></div>
+            </div>
+
+            <div id="boss-ui">
+                <div id="boss-name" style="font-size: 14px; font-weight: bold; text-shadow: 2px 2px #000;">BOSS: AKITA FIRE</div>
+                <div class="hp-bar"><div id="hp-fill"></div></div>
+            </div>
+
+            <canvas id="game"></canvas>
+        </div>
+
+        <!-- Controles Móviles -->
+        <div class="controls-panel">
+            <div class="d-pad">
+                <button class="btn-ui" id="ctrlLeft">←</button>
+                <button class="btn-ui btn-pee" id="ctrlDown">💧</button>
+                <button class="btn-ui" id="ctrlRight">→</button>
+            </div>
+            
+            <div class="action-btns">
+                <button class="btn-ui btn-action btn-bite" id="ctrlBite">MORDIDA</button>
+                <button class="btn-ui btn-action btn-jump" id="ctrlJump">SALTO</button>
             </div>
         </div>
     </div>
-
-    <div class="controls-hint-desktop">TECLADO: FLECHAS / Z (Morder) / ESPACIO (Saltar)</div>
 
     <script>
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
-        const WIDTH = 640;
-        const HEIGHT = 360;
-        canvas.width = WIDTH;
-        canvas.height = HEIGHT;
+        const GAME_W = 1280;
+        const GAME_H = 720;
+        canvas.width = GAME_W;
+        canvas.height = GAME_H;
 
-        // --- ESTADO GLOBAL ---
-        let score = 0;
-        let lives = 3;
-        let health = 3;
-        let cameraX = 0;
-        let gameState = 'start'; // start, playing, won, gameover
+        // Mapeo de URLs de AutoSprite basadas en tus links
+        const getSpriteUrl = (id) => `https://www.autosprite.io/api/files/spritesheets/${id}/sheet`;
 
-        const player = {
-            x: 80, y: 280, w: 42, h: 42,
-            vx: 0, vy: 0, grounded: false, facing: 1,
-            isBiting: 0, isPeeing: 0, invul: 0
-        };
-
-        const enemies = [
-            { x: 600, type: 'frenchie', color: '#95a5a6', dir: -1, speed: 2.2 },
-            { x: 1300, type: 'golden', color: '#f1c40f', dir: -1, speed: 1.8 },
-            { x: 1900, type: 'pug', color: '#d35400', dir: 1, speed: 1.2 }
-        ];
-
-        const boss = { x: 2650, y: 230, w: 100, h: 100, hp: 6, active: false, vy: 0, timer: 0 };
-        const items = { 
-            bags: [{x:450}, {x:950}, {x:1550}, {x:2150}], 
-            bones: [{x:700}, {x:1400}, {x:2000}] 
-        };
-
-        const keys = {};
-
-        // Iniciar Juego
-        document.addEventListener('pointerdown', () => {
-            if (gameState === 'start') {
-                gameState = 'playing';
-                document.getElementById('start-screen').style.display = 'none';
+        const ASSETS_MAP = {
+            zorro: {
+                idle: "xw2v7gosl3oc7fvzwd26f5",
+                walk: "25r95becj5c54hg45u8e77",
+                run: "x85mesz6g98j3kfhz77b5g",
+                jump: "45hp0ao8uwwz3vb41ishws",
+                bite: "ezadatbsu96opir8hxii49",
+                pee: "fz2rqwqd24o0v5m3yyyhjp"
+            },
+            dali: {
+                idle: "8azjvq5sdxmct8jt5tgxjs",
+                walk: "7n79xruevd2l04qgarnnr8",
+                run: "pka90vb1xokmu0f9d50q",
+                jump: "qqlz09nn9dtoa9wl6tw7",
+                bite: "gfdmnl2jwucezifs3pde7w",
+                pee: "1e54igurm4xisk9fyzgy3ac"
+            },
+            enemies: {
+                rat: "l1gzfo2joaxj4eytyojz",
+                frenchie: "ztxqnbyigj8r6cj8rauca",
+                golden: "qz55mpwqofik8pw2in1s8",
+                pigeon: "uvrhigstjkr8zafzeegh8u",
+                gavilan: "ojl3rd5iexi6xhwamwxe98",
+                collie: "py947f7onwzbzxt83qpi",
+                boss: "d9l0cbkjr7nc1iwbub62q4"
             }
-        });
-
-        // Controles Híbridos
-        const bindBtn = (id, key) => {
-            const el = document.getElementById(id);
-            const startEvent = (e) => { e.preventDefault(); keys[key] = true; };
-            const endEvent = (e) => { e.preventDefault(); keys[key] = false; };
-            el.addEventListener('touchstart', startEvent);
-            el.addEventListener('touchend', endEvent);
-            el.addEventListener('mousedown', startEvent);
-            el.addEventListener('mouseup', endEvent);
-            el.addEventListener('mouseleave', endEvent);
         };
-        bindBtn('btnLeft', 'ArrowLeft');
-        bindBtn('btnRight', 'ArrowRight');
-        bindBtn('btnDown', 'ArrowDown');
-        bindBtn('btnJump', 'Space');
-        bindBtn('btnBite', 'KeyZ');
 
+        // Estado del juego
+        let state = { 
+            level: 1, score: 0, health: 3, playing: false, 
+            cameraX: 0, worldW: 8000, parallaxX: 0, transitioning: false 
+        };
+        
+        let player = { 
+            x: 200, y: 530, w: 160, h: 160, vx: 0, vy: 0, speed: 10, jump: -26, 
+            grounded: false, facing: 1, anim: 'idle', frame: 0, sprites: {}, invul: 0 
+        };
+        
+        let enemies = [], items = { bags: [], bones: [] }, 
+            boss = { active: false, hp: 20, maxHp: 20, x: 6000, defeated: false, img: null };
+        let images = {};
+
+        function vibrate(d) { if (navigator.vibrate) navigator.vibrate(d); }
+
+        function loadImg(id) {
+            const url = getSpriteUrl(id);
+            if (images[url]) return images[url];
+            const i = new Image();
+            i.crossOrigin = "anonymous"; // Importante para que no se bloquee el dibujo
+            i.src = url;
+            images[url] = i;
+            return i;
+        }
+
+        function selectChar(type) {
+            const data = ASSETS_MAP[type];
+            player.sprites = {
+                idle: loadImg(data.idle), walk: loadImg(data.walk), 
+                run: loadImg(data.run), jump: loadImg(data.jump), 
+                bite: loadImg(data.bite), pee: loadImg(data.pee)
+            };
+            player.speed = (type === 'zorro') ? 14 : 10;
+            player.jump = (type === 'zorro') ? -26 : -38;
+            boss.img = loadImg(ASSETS_MAP.enemies.boss);
+            initLevel(1);
+            document.getElementById('start-screen').style.display = 'none';
+            state.playing = true;
+        }
+
+        function initLevel(lvl) {
+            state.level = lvl; state.cameraX = 0; state.transitioning = false;
+            player.x = 200; player.y = 530;
+            boss.maxHp = 20 + (lvl * 5); boss.hp = boss.maxHp;
+            boss.defeated = false; boss.active = false; boss.x = 6000;
+            
+            enemies = [];
+            const types = ['rat', 'frenchie', 'pigeon', 'golden', 'gavilan', 'collie'];
+            for(let i=0; i<8 + lvl*2; i++) {
+                const t = types[Math.floor(Math.random() * Math.min(lvl, types.length))];
+                enemies.push({ 
+                    x: 1200 + (i * 850), type: t, img: loadImg(ASSETS_MAP.enemies[t]), 
+                    speed: (3 + Math.random()*3), dir: -1, f: Math.random()*25, 
+                    y: t === 'gavilan' ? 180 : 530 
+                });
+            }
+            items.bags = Array.from({length: 10}, (_,i) => ({x: 1000 + i*900, done: false}));
+            items.bones = Array.from({length: 6}, (_,i) => ({x: 1500 + i*1400, done: false}));
+        }
+
+        // Lógica de entradas
+        const keys = {};
+        const bind = (id, k) => {
+            const el = document.getElementById(id);
+            const s = (e) => { e.preventDefault(); keys[k] = true; };
+            const e = (e) => { e.preventDefault(); keys[k] = false; };
+            el.addEventListener('mousedown', s); el.addEventListener('touchstart', s);
+            el.addEventListener('mouseup', e); el.addEventListener('touchend', e);
+        };
+        bind('ctrlLeft', 'ArrowLeft'); bind('ctrlRight', 'ArrowRight'); bind('ctrlDown', 'ArrowDown'); bind('ctrlJump', 'Space'); bind('ctrlBite', 'KeyZ');
         window.onkeydown = e => keys[e.code] = true;
         window.onkeyup = e => keys[e.code] = false;
 
-        function drawDog(ctx, x, y, size, facing, color, type) {
-            ctx.save();
-            ctx.translate(x + (facing === -1 ? size : 0), y);
-            ctx.scale(facing, 1);
-            
-            // Sombras
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            ctx.fillRect(5, size-2, size-10, 4);
-
-            // Cuerpo
-            ctx.fillStyle = color;
-            ctx.fillRect(5, 18, size - 15, size - 20);
-            
-            // Cabeza (Más detalle)
-            ctx.fillStyle = color;
-            ctx.fillRect(size - 18, 5, 22, 22);
-            
-            // Hocico Oscuro (Detalle de la imagen original)
-            ctx.fillStyle = '#5d4037';
-            ctx.fillRect(size - 2, 18, 8, 8);
-            
-            // Orejas puntiagudas
-            ctx.fillStyle = color;
-            if (type === 'hero' || type === 'akita') {
-                ctx.beginPath();
-                ctx.moveTo(size-15, 5); ctx.lineTo(size-8, -8); ctx.lineTo(size-2, 5); ctx.fill();
-                ctx.beginPath();
-                ctx.moveTo(size, 5); ctx.lineTo(size+8, -8); ctx.lineTo(size+15, 5); ctx.fill();
-            }
-
-            // Ojos
-            ctx.fillStyle = 'black';
-            ctx.fillRect(size - 4, 12, 4, 4);
-            
-            ctx.restore();
-        }
-
         function update() {
-            if (gameState !== 'playing') return;
+            if (!state.playing || state.transitioning) return;
 
-            // Físicas Jugador
-            if (keys['ArrowRight']) { player.vx = 4.8; player.facing = 1; }
-            else if (keys['ArrowLeft']) { player.vx = -4.8; player.facing = -1; }
+            // Lógica del Héroe
+            player.anim = 'idle';
+            if (keys['ArrowRight']) { player.vx = player.speed; player.facing = 1; player.anim = 'run'; }
+            else if (keys['ArrowLeft']) { player.vx = -player.speed; player.facing = -1; player.anim = 'run'; }
             else { player.vx *= 0.82; }
 
-            if (keys['Space'] && player.grounded) {
-                player.vy = -12.5;
-                player.grounded = false;
-            }
+            if (keys['Space'] && player.grounded) { player.vy = player.jump; player.grounded = false; vibrate(20); }
+            if (!player.grounded) player.anim = 'jump';
+            if (keys['KeyZ']) player.anim = 'bite';
+            if (keys['ArrowDown'] && player.grounded) player.anim = 'pee';
 
-            // Marcar territorio
-            if (keys['ArrowDown'] && player.grounded) {
-                items.bags.forEach(b => {
-                    if (!b.done && Math.abs(player.x - b.x) < 35) {
-                        b.done = true; player.isPeeing = 35; 
-                        score += 5;
-                        if (score >= 100) { score -= 100; lives++; }
-                    }
-                });
-            }
-
-            // Ataque
-            if (keys['KeyZ'] && player.isBiting === 0) player.isBiting = 25;
-
-            player.vy += 0.65;
-            player.x += player.vx;
-            player.y += player.vy;
-
-            if (player.y > 280) { player.y = 280; player.vy = 0; player.grounded = true; }
+            // Físicas básicas
+            player.vy += 1.8; player.x += player.vx; player.y += player.vy;
+            if (player.y > 530) { player.y = 530; player.vy = 0; player.grounded = true; }
             if (player.x < 0) player.x = 0;
 
-            cameraX = Math.max(0, Math.min(2500, player.x - 200));
+            // Cámara y Parallax
+            state.cameraX = Math.max(0, Math.min(state.worldW - GAME_W, player.x - 400));
+            state.parallaxX = state.cameraX * 0.4;
+            player.frame = (player.frame + 0.5) % 25;
 
-            // Enemigos
+            // Colisiones con enemigos
             enemies.forEach(en => {
-                en.x += en.speed * en.dir;
-                if (en.x > 2400 || en.x < 50) en.dir *= -1;
-                
-                if (player.invul <= 0 && Math.abs(player.x - en.x) < 30 && Math.abs(player.y - en.y) < 30) takeDamage();
-                
-                if (player.isBiting > 15 && Math.abs((player.x + 40*player.facing) - en.x) < 55) {
-                    en.x += player.facing * 90; // Knockback
+                en.x += en.speed * en.dir; if (en.x > state.worldW || en.x < 100) en.dir *= -1;
+                en.f = (en.f + 0.45) % 25;
+                if (player.invul <= 0 && Math.abs(player.x - en.x) < 80 && Math.abs(player.y - en.y) < 80 && !keys['KeyZ']) {
+                    state.health--; player.invul = 60; vibrate([100, 50, 100]); player.vx = player.facing * -25;
+                    if (state.health <= 0) { state.playing = false; document.getElementById('game-over-screen').style.display = 'flex'; }
                 }
             });
 
-            // Objetos
-            items.bones.forEach(b => {
-                if (!b.done && Math.abs(player.x - b.x) < 35) {
-                    b.done = true;
-                    if (health < 3) health++; 
-                    else { score += 10; if(score >= 100){ score-=100; lives++; } }
-                }
-            });
-
-            // Lógica de Boss
-            if (player.x > 2200) boss.active = true;
-            if (boss.active && boss.hp > 0) {
-                boss.timer++;
-                if (boss.timer % 110 === 0) boss.vy = -13;
-                boss.vy += 0.55; boss.y += boss.vy;
-                if (boss.y > 230) boss.y = 230;
-                boss.x += (player.x < boss.x ? -1 : 1) * 1.8;
-
-                if (player.invul <= 0 && Math.abs(player.x - boss.x) < 65 && Math.abs(player.y - boss.y) < 65) takeDamage();
-                
-                if (player.isBiting > 15 && Math.abs((player.x + 40*player.facing) - boss.x) < 90) {
-                    boss.hp--; player.isBiting = 0; boss.x += player.facing * 50;
-                    if (boss.hp <= 0) { gameState = 'won'; alert("¡DERROTASTE AL JEFE!"); location.reload(); }
+            // Lógica del Jefe
+            if (player.x > 5000 && !boss.defeated) {
+                boss.active = true; document.getElementById('boss-ui').style.display = 'block';
+                boss.x += (player.x < boss.x ? -2.5 : 2.5);
+                if (keys['KeyZ'] && Math.abs(player.x - boss.x) < 220) {
+                    boss.hp -= 0.2; document.getElementById('hp-fill').style.width = (boss.hp/boss.maxHp*100) + '%';
+                    if (boss.hp <= 0) { boss.defeated = true; boss.active = false; document.getElementById('boss-ui').style.display = 'none'; vibrate(400); }
                 }
             }
 
             if (player.invul > 0) player.invul--;
-            if (player.isBiting > 0) player.isBiting--;
-            if (player.isPeeing > 0) player.isPeeing--;
-
-            updateHUD();
+            document.getElementById('ui-score').innerText = state.score.toString().padStart(3, '0');
+            document.getElementById('ui-health').innerText = "❤".repeat(Math.max(0, state.health));
         }
 
-        function takeDamage() {
-            health--; player.invul = 70;
-            if (health <= 0) {
-                lives--; health = 3; player.x = Math.max(0, cameraX - 100);
-                if (lives < 0) { gameState = 'gameover'; alert("SIN VIDAS. Reintentar."); location.reload(); }
-            }
-        }
-
-        function updateHUD() {
-            document.getElementById('ui-score').innerText = score.toString().padStart(3, '0');
-            document.getElementById('ui-lives').innerText = lives;
-            document.getElementById('ui-health').innerText = "❤".repeat(Math.max(0, health));
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, WIDTH, HEIGHT);
+        function drawSprite(img, x, y, size, frame, facing, fallbackColor = '#3498db') {
+            const col = Math.floor(frame % 5), row = Math.floor(frame / 5);
+            ctx.save();
+            ctx.translate(x + (facing === -1 ? size : 0) - state.cameraX, y);
+            ctx.scale(facing, 1);
             
-            // Fondo Cielo
-            ctx.fillStyle = '#1e272e';
-            ctx.fillRect(0,0,WIDTH,HEIGHT);
-
-            ctx.save(); ctx.translate(-cameraX, 0);
-
-            // Escenario (Calle SNES)
-            ctx.fillStyle = '#2d3436';
-            for(let i=0; i<12; i++) {
-                ctx.fillRect(i*300, 80, 140, 270); // Edificios
-                ctx.fillStyle = '#f9ca24'; // Luz
-                ctx.fillRect(i*300+20, 120, 15, 15);
-                ctx.fillStyle = '#2d3436';
+            // Dibujamos el sprite si cargó, sino una silueta de respaldo
+            if (img && img.complete && img.naturalWidth !== 0) {
+                ctx.drawImage(img, col * 256, row * 256, 256, 256, 0, 0, size, size);
+            } else {
+                ctx.fillStyle = fallbackColor;
+                ctx.beginPath();
+                ctx.roundRect(0, size/4, size, size*0.75, 20);
+                ctx.fill();
+                // Detalle para identificar al personaje
+                ctx.fillStyle = 'black'; ctx.fillRect(size*0.7, size/2, 10, 10);
             }
-
-            ctx.fillStyle = '#333'; ctx.fillRect(0, 320, 3500, 40); // Acera
-            ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.strokeRect(0, 320, 3500, 40);
-
-            // Farolas
-            for(let i=0; i<12; i++) {
-                ctx.fillStyle = '#000'; ctx.fillRect(i*250+10, 180, 6, 140);
-                ctx.fillStyle = '#ffeaa7'; ctx.beginPath(); ctx.arc(i*250+13, 185, 10, 0, 7); ctx.fill();
-            }
-
-            // Objetos
-            items.bags.forEach(b => {
-                ctx.fillStyle = b.done ? '#f1c40f' : '#000';
-                ctx.beginPath(); ctx.arc(b.x, 325, 15, 0, 7); ctx.fill();
-            });
-            items.bones.forEach(b => {
-                if(!b.done) {
-                    ctx.fillStyle = '#fff';
-                    ctx.fillRect(b.x, 325, 18, 10);
-                }
-            });
-
-            // Personajes
-            enemies.forEach(en => drawDog(ctx, en.x, 280, 40, en.dir, en.color, en.type));
-            
-            if (boss.hp > 0 && boss.active) {
-                drawDog(ctx, boss.x, boss.y, 100, -1, '#e67e22', 'akita');
-                // Barra HP Boss mini
-                ctx.fillStyle = '#000'; ctx.fillRect(boss.x, boss.y - 20, 100, 6);
-                ctx.fillStyle = '#f00'; ctx.fillRect(boss.x, boss.y - 20, (boss.hp/6)*100, 6);
-            }
-
-            if (player.invul % 6 === 0) {
-                drawDog(ctx, player.x, player.y, 42, player.facing, '#a67c52', 'hero');
-            }
-
-            // FX Partículas
-            if (player.isPeeing > 0) {
-                ctx.fillStyle = '#f1c40f';
-                for(let i=0; i<4; i++) ctx.fillRect(player.x - 2, player.y + 35 + Math.random()*8, 4, 4);
-            }
-            if (player.isBiting > 12) {
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
-                ctx.beginPath(); ctx.arc(player.x + (player.facing*55), player.y+20, 18, 0, 7); ctx.stroke();
-            }
-
             ctx.restore();
         }
 
+        function draw() {
+            ctx.clearRect(0, 0, GAME_W, GAME_H);
+            if (!state.playing && state.health > 0) return;
+
+            // Fondo Parallax
+            ctx.fillStyle = '#161a1d';
+            for(let i=0; i<30; i++) ctx.fillRect((i*750) - state.parallaxX, 50, 600, 650);
+
+            // Suelo
+            ctx.fillStyle = '#34495e'; ctx.fillRect(0 - state.cameraX, 650, 20000, 70);
+            
+            // Objetos
+            items.bags.forEach(b => {
+                ctx.fillStyle = b.done ? '#f1c40f' : '#111';
+                ctx.beginPath(); ctx.ellipse(b.x - state.cameraX, 640, 40, 50, 0, 0, 7); ctx.fill();
+            });
+
+            // Personajes
+            enemies.forEach(en => drawSprite(en.img, en.x, en.y, 140, en.f, en.dir, '#e74c3c'));
+            if (boss.active) drawSprite(boss.img, boss.x, 420, 300, player.frame, -1, '#f1c40f');
+            if (player.invul % 4 < 2) {
+                const currentImg = player.sprites[player.anim] || player.sprites.idle;
+                drawSprite(currentImg, player.x, player.y, player.w, player.frame, player.facing, '#3498db');
+            }
+        }
+
         function loop() { update(); draw(); requestAnimationFrame(loop); }
-        loop();
+        
+        window.onload = () => {
+            const hScore = localStorage.getItem('uDogHighScore') || 0;
+            const mLevel = localStorage.getItem('uDogMaxLevel') || 1;
+            document.getElementById('high-score').innerText = hScore;
+            document.getElementById('max-level').innerText = mLevel;
+            loop();
+        };
     </script>
 </body>
 </html>
