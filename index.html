@@ -2,464 +2,744 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Urban Dog: Street King</title>
-    
-    <!-- Etiquetas PWA para pantalla completa en móviles -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0a0a0c">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Urban Dog: Street King v2</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@700&display=swap');
-
-        :root {
-            --safe-top: env(safe-area-inset-top);
-            --safe-bottom: env(safe-area-inset-bottom);
-            --ui-gold: #f1c40f;
-            --ui-red: #e74c3c;
-            --ui-blue: #3498db;
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        * { box-sizing: border-box; -webkit-user-select: none; user-select: none; touch-action: none; outline: none; margin: 0; padding: 0; }
+        body {
+            background: #0a0a0c;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; font-family: 'Press Start 2P', cursive; color: white; overflow: hidden;
         }
-
-        * { 
-            box-sizing: border-box; 
-            -webkit-touch-callout: none; 
-            -webkit-user-select: none; 
-            user-select: none; 
-            outline: none; 
-        }
-        
-        body { 
-            margin: 0; 
-            background: #0a0a0c; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            font-family: 'Quicksand', sans-serif; 
-            color: white; 
-            overflow: hidden; 
-            touch-action: none;
-        }
-
-        #game-wrapper {
+        #game-container {
             position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            background: #111;
+            width: 100vw; height: 56.25vw;
+            max-height: 65vh; max-width: 115vh;
+            background: #1a1a2e;
+            border: 3px solid #333; overflow: hidden;
         }
-
-        #game-container { 
-            position: relative; 
-            flex-grow: 1;
-            background: #1e272e; 
-            overflow: hidden; 
+        canvas { width: 100%; height: 100%; display: block; }
+        .hud {
+            position: absolute; top: 0; left: 0; right: 0;
+            display: flex; justify-content: space-between;
+            font-size: 7px; pointer-events: none; z-index: 10; padding: 8px;
         }
-
-        canvas { 
-            width: 100%; 
-            height: 100%; 
-            display: block; 
-            image-rendering: auto;
+        .stat { background: rgba(0,0,0,0.75); padding: 6px 8px; border: 1px solid #444; min-width: 70px; line-height: 1.8; }
+        .controls { width: 100%; max-width: 800px; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; background: #111; }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 48px); gap: 6px; }
+        .action-pad { display: flex; gap: 10px; align-items: flex-end; }
+        .btn {
+            width: 48px; height: 48px; background: #2c3e50; border: 3px solid #1a252f;
+            border-bottom-width: 5px; border-radius: 10px; display: flex; align-items: center;
+            justify-content: center; font-size: 15px; color: #ecf0f1; cursor: pointer; transition: transform 0.1s;
         }
-        
-        /* Pantallas de selección y Game Over */
-        .overlay { 
-            position: absolute; 
-            inset: 0; 
-            background: rgba(0,0,0,0.95); 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            z-index: 100; 
-            text-align: center; 
-            padding: 20px;
-        }
-
-        .char-select { 
-            display: flex; 
-            gap: 15px; 
-            margin-top: 20px; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-        }
-
-        .char-card { 
-            background: #2c3e50; 
-            padding: 15px; 
-            border-radius: 20px; 
-            border: 4px solid #444; 
-            cursor: pointer; 
-            transition: transform 0.2s, border-color 0.2s; 
-            width: 160px; 
-        }
-
-        .char-card:active { transform: scale(0.95); }
-        .char-card:hover { border-color: var(--ui-gold); }
-        .char-card img { width: 100px; height: 100px; border-radius: 15px; margin-bottom: 10px; pointer-events: none; object-fit: contain; background: #161a1d; }
-        
-        /* HUD Superior */
-        .hud { 
-            position: absolute; 
-            top: calc(15px + var(--safe-top)); 
-            left: 15px; 
-            right: 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            font-size: 14px; 
-            pointer-events: none; 
-            z-index: 50; 
-        }
-
-        .stat-box { 
-            background: rgba(0,0,0,0.7); 
-            padding: 10px 15px; 
-            border-radius: 12px; 
-            border: 2px solid rgba(255,255,255,0.1); 
-            text-align: center;
-        }
-
-        #boss-ui { 
-            position: absolute; 
-            top: 100px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 70%; 
-            display: none; 
-            text-align: center; 
-        }
-
-        .hp-bar { height: 12px; background: #333; border: 2px solid #fff; border-radius: 6px; margin-top: 5px; overflow: hidden; }
-        #hp-fill { height: 100%; background: var(--ui-red); width: 100%; transition: width 0.3s; }
-        
-        /* Controles móviles */
-        .controls-panel { 
-            width: 100%; 
-            padding: calc(10px + var(--safe-bottom)) 20px 20px 20px;
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            background: #161a1d;
-            border-top: 4px solid #222;
-        }
-
-        .d-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .action-btns { display: flex; gap: 15px; }
-
-        .btn-ui { 
-            width: 70px; 
-            height: 70px; 
-            background: #34495e; 
-            border: none; 
-            border-radius: 20px; 
-            color: white; 
-            font-size: 24px; 
-            box-shadow: 0 6px 0 #1b2631; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-
-        .btn-ui:active { 
-            transform: translateY(4px); 
-            box-shadow: 0 2px 0 #1b2631;
-            background: #4a627a;
-        }
-
-        .btn-action { width: 85px; height: 85px; border-radius: 50%; font-weight: bold; font-size: 16px; }
-        .btn-pee { background: var(--ui-gold); color: #000; box-shadow: 0 6px 0 #a68b0a; }
-        .btn-bite { background: var(--ui-red); box-shadow: 0 6px 0 #922b21; }
-        .btn-jump { background: var(--ui-blue); box-shadow: 0 6px 0 #21618c; }
-
-        .record-info { font-size: 14px; color: var(--ui-gold); margin-top: 10px; margin-bottom: 20px; }
+        .btn:active { transform: translateY(3px); border-bottom-width: 2px; }
+        .btn-yellow { background: #f39c12; border-color: #e67e22; color: #000; }
+        .btn-red { background: #c0392b; border-color: #922b21; }
+        .btn-blue { background: #2980b9; border-color: #1a6089; }
+        .btn-label { font-size: 6px; margin-top: 3px; color: #7f8fa6; text-align: center; }
+        .desktop-hint { font-size: 7px; color: #444; margin-top: 4px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div id="game-wrapper">
-        <!-- Pantalla Inicial -->
-        <div id="start-screen" class="overlay">
-            <h1 style="color: var(--ui-gold); font-size: 36px; margin-bottom: 5px;">URBAN DOG</h1>
-            <p style="color: #aaa; margin-bottom: 10px;">SELECCIONA TU HÉROE</p>
-            
-            <div class="record-info">
-                🏆 RÉCORD: <span id="high-score">0</span> | BARRIO MÁX: <span id="max-level">1</span>
-            </div>
-
-            <div class="char-select">
-                <div class="char-card" onclick="selectChar('zorro')">
-                    <img src="https://www.autosprite.io/api/files/spritesheets/xw2v7gosl3oc7fvzwd26f5/sheet" alt="Zorro" crossorigin="anonymous">
-                    <div>ZORRO</div>
-                    <small style="color: var(--ui-gold);">VELOCIDAD +++</small>
-                </div>
-                <div class="char-card" onclick="selectChar('dali')">
-                    <img src="https://www.autosprite.io/api/files/spritesheets/8azjvq5sdxmct8jt5tgxjs/sheet" alt="Dalí" crossorigin="anonymous">
-                    <div>DALÍ</div>
-                    <small style="color: var(--ui-blue);">SALTO +++</small>
-                </div>
-            </div>
-            <p style="font-size: 10px; color: #777; margin-top: 15px;">Cargando sprites de AutoSprite.io...</p>
-        </div>
-
-        <!-- Game Over -->
-        <div id="game-over-screen" class="overlay" style="display:none;">
-            <h1 style="color: var(--ui-red); font-size: 42px;">¡HAS CAÍDO!</h1>
-            <button class="btn-ui" style="width: 220px; height: 60px;" onclick="location.reload()">REINTENTAR</button>
-        </div>
-
-        <div id="game-container">
-            <div class="hud">
-                <div class="stat-box">BARRIO: <span id="ui-level">1</span><br>PTS: <span id="ui-score">000</span></div>
-                <div class="stat-box">SALUD<br><span id="ui-health">❤❤❤</span></div>
-            </div>
-
-            <div id="boss-ui">
-                <div id="boss-name" style="font-size: 14px; font-weight: bold; text-shadow: 2px 2px #000;">BOSS: AKITA FIRE</div>
-                <div class="hp-bar"><div id="hp-fill"></div></div>
-            </div>
-
-            <canvas id="game"></canvas>
-        </div>
-
-        <!-- Controles Móviles -->
-        <div class="controls-panel">
-            <div class="d-pad">
-                <button class="btn-ui" id="ctrlLeft">←</button>
-                <button class="btn-ui btn-pee" id="ctrlDown">💧</button>
-                <button class="btn-ui" id="ctrlRight">→</button>
-            </div>
-            
-            <div class="action-btns">
-                <button class="btn-ui btn-action btn-bite" id="ctrlBite">MORDIDA</button>
-                <button class="btn-ui btn-action btn-jump" id="ctrlJump">SALTO</button>
-            </div>
-        </div>
+<div id="game-container">
+    <div class="hud">
+        <div class="stat">PTS<br><span id="ui-score">000</span></div>
+        <div class="stat" id="ui-char-stat" style="text-align:center">🐕<br><span id="ui-char">ZORRO</span></div>
+        <div class="stat" style="text-align:right">VIDAS <span id="ui-lives">3</span><br><span id="ui-health">❤❤❤</span></div>
     </div>
+    <canvas id="game"></canvas>
+</div>
 
-    <script>
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        const GAME_W = 1280;
-        const GAME_H = 720;
-        canvas.width = GAME_W;
-        canvas.height = GAME_H;
+<div class="controls">
+    <div class="d-pad">
+        <div></div>
+        <div><button class="btn" id="btnUp">↑</button></div>
+        <div></div>
+        <div><button class="btn" id="btnLeft">←</button></div>
+        <div><button class="btn btn-yellow" id="btnDown">💧</button></div>
+        <div><button class="btn" id="btnRight">→</button></div>
+    </div>
+    <div class="action-pad">
+        <div><button class="btn btn-red" id="btnBite">Z</button><div class="btn-label">MORDER</div></div>
+        <div><button class="btn btn-blue" id="btnJump">A</button><div class="btn-label">SALTAR</div></div>
+    </div>
+</div>
+<div class="desktop-hint">FLECHAS / Z (Morder) / ESPACIO (Saltar)</div>
 
-        // Mapeo de URLs de AutoSprite basadas en tus links
-        const getSpriteUrl = (id) => `https://www.autosprite.io/api/files/spritesheets/${id}/sheet`;
+<script>
+// ═══════════════════════════════════════════════════════════
+//  URBAN DOG: STREET KING — v2.0 Sprite Edition
+// ═══════════════════════════════════════════════════════════
 
-        const ASSETS_MAP = {
-            zorro: {
-                idle: "xw2v7gosl3oc7fvzwd26f5",
-                walk: "25r95becj5c54hg45u8e77",
-                run: "x85mesz6g98j3kfhz77b5g",
-                jump: "45hp0ao8uwwz3vb41ishws",
-                bite: "ezadatbsu96opir8hxii49",
-                pee: "fz2rqwqd24o0v5m3yyyhjp"
-            },
-            dali: {
-                idle: "8azjvq5sdxmct8jt5tgxjs",
-                walk: "7n79xruevd2l04qgarnnr8",
-                run: "pka90vb1xokmu0f9d50q",
-                jump: "qqlz09nn9dtoa9wl6tw7",
-                bite: "gfdmnl2jwucezifs3pde7w",
-                pee: "1e54igurm4xisk9fyzgy3ac"
-            },
-            enemies: {
-                rat: "l1gzfo2joaxj4eytyojz",
-                frenchie: "ztxqnbyigj8r6cj8rauca",
-                golden: "qz55mpwqofik8pw2in1s8",
-                pigeon: "uvrhigstjkr8zafzeegh8u",
-                gavilan: "ojl3rd5iexi6xhwamwxe98",
-                collie: "py947f7onwzbzxt83qpi",
-                boss: "d9l0cbkjr7nc1iwbub62q4"
-            }
-        };
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = 640, H = 360;
+canvas.width = W; canvas.height = H;
 
-        // Estado del juego
-        let state = { 
-            level: 1, score: 0, health: 3, playing: false, 
-            cameraX: 0, worldW: 8000, parallaxX: 0, transitioning: false 
-        };
-        
-        let player = { 
-            x: 200, y: 530, w: 160, h: 160, vx: 0, vy: 0, speed: 10, jump: -26, 
-            grounded: false, facing: 1, anim: 'idle', frame: 0, sprites: {}, invul: 0 
-        };
-        
-        let enemies = [], items = { bags: [], bones: [] }, 
-            boss = { active: false, hp: 20, maxHp: 20, x: 6000, defeated: false, img: null };
-        let images = {};
+// ── GOOGLE DRIVE SPRITES ────────────────────────────────────────
+// Mapeo de Google Drive File IDs para Zorro y Dali
+const GD_SPRITES = {
+    zorro: {
+        idle:       'https://drive.google.com/file/d/1CAzfCRCmJRmJhcpp80Ads7KF17nitvHM/view?usp=drive_link',
+        walk:       'https://drive.google.com/file/d/1CAzfCRCmJRmJhcpp80Ads7KF17nitvHM/view?usp=drive_link,
+        run:        'https://drive.google.com/file/d/1A36MSj-fnyEWL3F2hfDQwQ8Pu8BdYsct/view?usp=drive_link',
+        jump:       'https://drive.google.com/file/d/1u1cTOclzWjKaUR3ybCjZhW4R0V9luFI1/view?usp=drive_link',
+        dog_bite:   '1https://drive.google.com/file/d/1eI-ltXV_xFr9WYEWf-xjxjJeaonT039e/view?usp=drive_link',
+        give_a_paw: 'https://drive.google.com/file/d/1yv0oqpn_FJ3pF12NZ8L-fSAcUtvllMj9/view?usp=drive_link',
+        pickup:     'https://drive.google.com/file/d/1N-Z9L991gK2YS8qTNcwRGXLM9ELBJygj/view?usp=drive_link',
+    },
+    dali: {
+        // 👇 Añade aquí los file IDs de Dali cuando proporciones los links
+    },
+};
+function gdUrl(fileId) { return `https://drive.google.com/uc?export=download&id=${fileId}`; }
 
-        function vibrate(d) { if (navigator.vibrate) navigator.vibrate(d); }
+const CHARS_CONFIG = {
+    zorro:    { label: 'ZORRO',    color: '#a0785a', accent: '#f39c12', desc: 'VELOZ / ÁGIL' },
+    dali:     { label: 'DALÍ',     color: '#8b6914', accent: '#9b59b6', desc: 'EQUILIBRADO' },
+    akita:    { label: 'AKITA',    color: '#e67e22', accent: '#e74c3c' },
+    frenchie: { label: 'FRENCHIE', color: '#7f8c8d', accent: '#95a5a6' },
+    golden:   { label: 'GOLDEN',   color: '#d4ac0d', accent: '#f1c40f' },
+    collie:   { label: 'COLLIE',   color: '#4a4a8a', accent: '#8899ff' },
+};
 
-        function loadImg(id) {
-            const url = getSpriteUrl(id);
-            if (images[url]) return images[url];
-            const i = new Image();
-            i.crossOrigin = "anonymous"; // Importante para que no se bloquee el dibujo
-            i.src = url;
-            images[url] = i;
-            return i;
+// Mapeo de acciones a nombres de animación por personaje
+// Zorro: tiene "make pee", "dog bite" dedicados. Dalí: tiene "scratch_cat" para ataque.
+const ANIM_MAP = {
+    pee:  ['make_pee', 'realy_make_a_pee', 'make pee', 'custom', 'idle'],
+    bite: ['dog_bite', 'bite', 'scratch_cat', 'custom', 'idle'],
+    hit:  ['punch', 'kick', 'custom', 'walk'],
+};
+function pickAnim(charKey, actionKey) {
+    for (const name of ANIM_MAP[actionKey]) {
+        if (sprites[charKey]?.[name]) return name;
+    }
+    return 'idle';
+}
+function norm(s) { return s.toLowerCase().replace(/\s+/g, '_'); }
+
+// ── SPRITE SYSTEM ────────────────────────────────────────────
+const COLS = 5, FSIZE = 256, FCOUNT = 25;
+const sprites = {}; // sprites[charKey][animName] = HTMLImageElement
+
+async function callAutosprite(toolName, args) {
+    const body = JSON.stringify({
+        jsonrpc: '2.0', id: Date.now(),
+        method: 'tools/call',
+        params: { name: toolName, arguments: args }
+    });
+    const resp = await fetch(AS_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${AS_KEY}`, 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' },
+        body
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const ct = resp.headers.get('content-type') || '';
+    let data;
+    if (ct.includes('event-stream')) {
+        // SSE response — parse data lines
+        const text = await resp.text();
+        for (const line of text.split('\n')) {
+            if (!line.startsWith('data: ')) continue;
+            try { data = JSON.parse(line.slice(6)); if (data.result) break; } catch {}
         }
+    } else {
+        data = await resp.json();
+    }
+    const textContent = data?.result?.content?.[0]?.text;
+    if (textContent) return JSON.parse(textContent);
+    if (data?.result?.items) return data.result;
+    return data?.result;
+}
 
-        function selectChar(type) {
-            const data = ASSETS_MAP[type];
-            player.sprites = {
-                idle: loadImg(data.idle), walk: loadImg(data.walk), 
-                run: loadImg(data.run), jump: loadImg(data.jump), 
-                bite: loadImg(data.bite), pee: loadImg(data.pee)
-            };
-            player.speed = (type === 'zorro') ? 14 : 10;
-            player.jump = (type === 'zorro') ? -26 : -38;
-            boss.img = loadImg(ASSETS_MAP.enemies.boss);
-            initLevel(1);
-            document.getElementById('start-screen').style.display = 'none';
-            state.playing = true;
-        }
+function loadImg(url) {
+    return new Promise(resolve => {
+        if (!url) return resolve(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = url;
+    });
+}
 
-        function initLevel(lvl) {
-            state.level = lvl; state.cameraX = 0; state.transitioning = false;
-            player.x = 200; player.y = 530;
-            boss.maxHp = 20 + (lvl * 5); boss.hp = boss.maxHp;
-            boss.defeated = false; boss.active = false; boss.x = 6000;
-            
-            enemies = [];
-            const types = ['rat', 'frenchie', 'pigeon', 'golden', 'gavilan', 'collie'];
-            for(let i=0; i<8 + lvl*2; i++) {
-                const t = types[Math.floor(Math.random() * Math.min(lvl, types.length))];
-                enemies.push({ 
-                    x: 1200 + (i * 850), type: t, img: loadImg(ASSETS_MAP.enemies[t]), 
-                    speed: (3 + Math.random()*3), dir: -1, f: Math.random()*25, 
-                    y: t === 'gavilan' ? 180 : 530 
-                });
-            }
-            items.bags = Array.from({length: 10}, (_,i) => ({x: 1000 + i*900, done: false}));
-            items.bones = Array.from({length: 6}, (_,i) => ({x: 1500 + i*1400, done: false}));
-        }
-
-        // Lógica de entradas
-        const keys = {};
-        const bind = (id, k) => {
-            const el = document.getElementById(id);
-            const s = (e) => { e.preventDefault(); keys[k] = true; };
-            const e = (e) => { e.preventDefault(); keys[k] = false; };
-            el.addEventListener('mousedown', s); el.addEventListener('touchstart', s);
-            el.addEventListener('mouseup', e); el.addEventListener('touchend', e);
-        };
-        bind('ctrlLeft', 'ArrowLeft'); bind('ctrlRight', 'ArrowRight'); bind('ctrlDown', 'ArrowDown'); bind('ctrlJump', 'Space'); bind('ctrlBite', 'KeyZ');
-        window.onkeydown = e => keys[e.code] = true;
-        window.onkeyup = e => keys[e.code] = false;
-
-        function update() {
-            if (!state.playing || state.transitioning) return;
-
-            // Lógica del Héroe
-            player.anim = 'idle';
-            if (keys['ArrowRight']) { player.vx = player.speed; player.facing = 1; player.anim = 'run'; }
-            else if (keys['ArrowLeft']) { player.vx = -player.speed; player.facing = -1; player.anim = 'run'; }
-            else { player.vx *= 0.82; }
-
-            if (keys['Space'] && player.grounded) { player.vy = player.jump; player.grounded = false; vibrate(20); }
-            if (!player.grounded) player.anim = 'jump';
-            if (keys['KeyZ']) player.anim = 'bite';
-            if (keys['ArrowDown'] && player.grounded) player.anim = 'pee';
-
-            // Físicas básicas
-            player.vy += 1.8; player.x += player.vx; player.y += player.vy;
-            if (player.y > 530) { player.y = 530; player.vy = 0; player.grounded = true; }
-            if (player.x < 0) player.x = 0;
-
-            // Cámara y Parallax
-            state.cameraX = Math.max(0, Math.min(state.worldW - GAME_W, player.x - 400));
-            state.parallaxX = state.cameraX * 0.4;
-            player.frame = (player.frame + 0.5) % 25;
-
-            // Colisiones con enemigos
-            enemies.forEach(en => {
-                en.x += en.speed * en.dir; if (en.x > state.worldW || en.x < 100) en.dir *= -1;
-                en.f = (en.f + 0.45) % 25;
-                if (player.invul <= 0 && Math.abs(player.x - en.x) < 80 && Math.abs(player.y - en.y) < 80 && !keys['KeyZ']) {
-                    state.health--; player.invul = 60; vibrate([100, 50, 100]); player.vx = player.facing * -25;
-                    if (state.health <= 0) { state.playing = false; document.getElementById('game-over-screen').style.display = 'flex'; }
-                }
-            });
-
-            // Lógica del Jefe
-            if (player.x > 5000 && !boss.defeated) {
-                boss.active = true; document.getElementById('boss-ui').style.display = 'block';
-                boss.x += (player.x < boss.x ? -2.5 : 2.5);
-                if (keys['KeyZ'] && Math.abs(player.x - boss.x) < 220) {
-                    boss.hp -= 0.2; document.getElementById('hp-fill').style.width = (boss.hp/boss.maxHp*100) + '%';
-                    if (boss.hp <= 0) { boss.defeated = true; boss.active = false; document.getElementById('boss-ui').style.display = 'none'; vibrate(400); }
-                }
-            }
-
-            if (player.invul > 0) player.invul--;
-            document.getElementById('ui-score').innerText = state.score.toString().padStart(3, '0');
-            document.getElementById('ui-health').innerText = "❤".repeat(Math.max(0, state.health));
-        }
-
-        function drawSprite(img, x, y, size, frame, facing, fallbackColor = '#3498db') {
-            const col = Math.floor(frame % 5), row = Math.floor(frame / 5);
-            ctx.save();
-            ctx.translate(x + (facing === -1 ? size : 0) - state.cameraX, y);
-            ctx.scale(facing, 1);
-            
-            // Dibujamos el sprite si cargó, sino una silueta de respaldo
-            if (img && img.complete && img.naturalWidth !== 0) {
-                ctx.drawImage(img, col * 256, row * 256, 256, 256, 0, 0, size, size);
+async function loadCharSprites(charKey) {
+    sprites[charKey] = {};
+    const fileIds = GD_SPRITES[charKey];
+    if (!fileIds || Object.keys(fileIds).length === 0) {
+        console.warn(`⚠️  ${charKey}: sin file IDs en GD_SPRITES`);
+        return;
+    }
+    try {
+        await Promise.all(Object.entries(fileIds).map(async ([animName, fileId]) => {
+            const url = gdUrl(fileId);
+            const img = await loadImg(url);
+            if (img) {
+                sprites[charKey][animName] = img;
+                console.log(`  ✓ ${charKey}.${animName}`);
             } else {
-                ctx.fillStyle = fallbackColor;
-                ctx.beginPath();
-                ctx.roundRect(0, size/4, size, size*0.75, 20);
-                ctx.fill();
-                // Detalle para identificar al personaje
-                ctx.fillStyle = 'black'; ctx.fillRect(size*0.7, size/2, 10, 10);
+                console.warn(`  ✗ ${charKey}.${animName} - no se cargó`);
             }
-            ctx.restore();
+        }));
+        console.log(`✅ ${charKey}: ${Object.keys(sprites[charKey]).length} animaciones cargadas`);
+    } catch (e) {
+        console.warn(`❌ ${charKey} failed:`, e.message);
+    }
+}
+
+// ── ANIMATION ENGINE ─────────────────────────────────────────
+const animStates = {};
+
+function animTick(uid, animName, fps = 12, loop = true) {
+    if (!animStates[uid] || animStates[uid].name !== animName) {
+        animStates[uid] = { name: animName, frame: 0, timer: 0 };
+    }
+    const a = animStates[uid];
+    a.timer++;
+    if (a.timer >= Math.floor(60 / fps)) {
+        a.timer = 0;
+        if (loop) a.frame = (a.frame + 1) % FCOUNT;
+        else      a.frame = Math.min(a.frame + 1, FCOUNT - 1);
+    }
+    return a.frame;
+}
+
+function drawSprite(charKey, animName, frame, x, y, w, h, facing) {
+    const sheet = sprites[charKey]?.[animName] ?? sprites[charKey]?.['idle'] ?? sprites[charKey]?.['walk'];
+    if (!sheet) return false;
+    const col = frame % COLS, row = Math.floor(frame / COLS);
+    ctx.save();
+    if (facing === -1) {
+        ctx.translate(x + w, y); ctx.scale(-1, 1);
+        ctx.drawImage(sheet, col * FSIZE, row * FSIZE, FSIZE, FSIZE, 0, 0, w, h);
+    } else {
+        ctx.drawImage(sheet, col * FSIZE, row * FSIZE, FSIZE, FSIZE, x, y, w, h);
+    }
+    ctx.restore();
+    return true;
+}
+
+// Fallback geometric rendering
+function drawDogGeo(x, y, w, h, facing, color, type) {
+    ctx.save();
+    ctx.translate(x + (facing === -1 ? w : 0), y);
+    ctx.scale(facing, 1);
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(4, h - 2, w - 8, 3);
+    ctx.fillStyle = color;
+    ctx.fillRect(4, h * 0.45, w - 12, h * 0.52);
+    ctx.fillRect(w - 14, h * 0.1, 18, 20);
+    ctx.fillStyle = '#5d4037';
+    ctx.fillRect(w, h * 0.5, 7, 7);
+    if (type !== 'simple') {
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.moveTo(w - 12, h * 0.1); ctx.lineTo(w - 6, -6); ctx.lineTo(0, h * 0.1); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(w + 2, h * 0.1); ctx.lineTo(w + 8, -6); ctx.lineTo(w + 14, h * 0.1); ctx.fill();
+    }
+    ctx.fillStyle = '#000'; ctx.fillRect(w - 2, h * 0.25, 3, 3);
+    ctx.restore();
+}
+
+function drawChar(uid, charKey, animName, fps, loop, x, y, w, h, facing) {
+    const frame = animTick(uid, animName, fps, loop);
+    if (!drawSprite(charKey, animName, frame, x, y, w, h, facing)) {
+        drawDogGeo(x, y, w, h, facing, CHARS_CONFIG[charKey]?.color || '#a0785a', 'hero');
+    }
+}
+
+// ── GAME STATE ───────────────────────────────────────────────
+let score = 0, lives = 3, health = 3, cameraX = 0;
+let gameState = 'start'; // start | charSelect | loading | playing | won | gameover
+let selectedChar = 'zorro';
+let spritesLoaded = false;
+let loadingMsg = 'Cargando sprites...';
+let charSelectFrame = 0;
+
+const GROUND_Y = 288;
+
+const player = { x: 80, y: GROUND_Y - 72, w: 72, h: 72, vx: 0, vy: 0, grounded: true, facing: 1, isBiting: 0, isPeeing: 0, invul: 0 };
+
+const enemies = [
+    { id:'e0', x:  620, y: GROUND_Y-52, w:52, h:52, charKey:'frenchie', dir:-1, speed:2.2, alive:true, hitTimer:0 },
+    { id:'e1', x: 1100, y: GROUND_Y-52, w:52, h:52, charKey:'collie',   dir: 1, speed:1.5, alive:true, hitTimer:0 },
+    { id:'e2', x: 1600, y: GROUND_Y-52, w:52, h:52, charKey:'golden',   dir:-1, speed:1.7, alive:true, hitTimer:0 },
+    { id:'e3', x: 2000, y: GROUND_Y-52, w:52, h:52, charKey:'frenchie', dir: 1, speed:2.3, alive:true, hitTimer:0 },
+    { id:'e4', x: 2300, y: GROUND_Y-52, w:52, h:52, charKey:'collie',   dir:-1, speed:1.6, alive:true, hitTimer:0 },
+];
+
+const boss = { x: 2650, y: GROUND_Y - 128, w: 128, h: 128, hp: 6, maxHp: 6, active: false, vy: 0, timer: 0, facing: -1 };
+
+const items = {
+    bags: [{x:460,done:false},{x:960,done:false},{x:1560,done:false},{x:2160,done:false}],
+    bones: [{x:710,done:false},{x:1410,done:false},{x:2010,done:false}],
+    doghouse: { x: 2920, w: 90, h: 80 }
+};
+
+// ── INPUT ─────────────────────────────────────────────────────
+const keys = {};
+window.onkeydown = e => { keys[e.code] = true; };
+window.onkeyup   = e => { keys[e.code] = false; };
+
+function bindBtn(id, code) {
+    const el = document.getElementById(id);
+    const on = e => { e.preventDefault(); keys[code] = true; };
+    const off = e => { e.preventDefault(); keys[code] = false; };
+    el.addEventListener('touchstart', on, {passive:false}); el.addEventListener('touchend', off);
+    el.addEventListener('mousedown', on); el.addEventListener('mouseup', off); el.addEventListener('mouseleave', off);
+}
+bindBtn('btnLeft', 'ArrowLeft'); bindBtn('btnRight', 'ArrowRight');
+bindBtn('btnDown', 'ArrowDown'); bindBtn('btnJump', 'Space'); bindBtn('btnBite', 'KeyZ');
+
+// ── CHARACTER SELECT ──────────────────────────────────────────
+const charOptions = ['zorro', 'dali'];
+let charCursor = 0;
+
+canvas.addEventListener('click', e => {
+    if (gameState === 'start') {
+        gameState = 'charSelect'; return;
+    }
+    if (gameState === 'charSelect') {
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * (W / rect.width);
+        if (mx < W / 2) { charCursor = 0; selectedChar = 'zorro'; }
+        else            { charCursor = 1; selectedChar = 'dali'; }
+        startGame(); return;
+    }
+    if (gameState === 'won' || gameState === 'gameover') location.reload();
+});
+
+canvas.addEventListener('touchend', e => {
+    if (gameState === 'start') { gameState = 'charSelect'; return; }
+    if (gameState === 'charSelect') {
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.changedTouches[0].clientX - rect.left) * (W / rect.width);
+        charCursor = mx < W / 2 ? 0 : 1;
+        selectedChar = charOptions[charCursor];
+        startGame(); return;
+    }
+    if (gameState === 'won' || gameState === 'gameover') location.reload();
+});
+
+async function startGame() {
+    gameState = 'loading';
+    if (!spritesLoaded) {
+        loadingMsg = '🐾 Cargando sprites desde Autosprite...';
+        try {
+            // Solo cargar Zorro y Dalí (los que tenemos sprites en Google Drive)
+            const charKeys = ['zorro', 'dali'];
+            await Promise.all(charKeys.map(k => loadCharSprites(k)));
+            spritesLoaded = true;
+            loadingMsg = '✓ ¡Sprites listos!';
+        } catch (e) {
+            loadingMsg = 'Usando gráficos de respaldo...';
+            spritesLoaded = true;
         }
+        await new Promise(r => setTimeout(r, 600));
+    }
+    // Reset game
+    score = 0; lives = 3; health = 3; cameraX = 0;
+    player.x = 80; player.y = GROUND_Y - 72; player.vx = 0; player.vy = 0; player.grounded = true;
+    enemies.forEach((e, i) => { e.alive = true; e.x = [620,1320,1920][i]; });
+    boss.hp = 6; boss.active = false; boss.x = 2650; boss.y = GROUND_Y - 128;
+    items.bags.forEach(b => b.done = false);
+    items.bones.forEach(b => b.done = false);
+    document.getElementById('ui-char').textContent = CHARS_CONFIG[selectedChar].label;
+    gameState = 'playing';
+}
 
-        function draw() {
-            ctx.clearRect(0, 0, GAME_W, GAME_H);
-            if (!state.playing && state.health > 0) return;
+// ── UPDATE ────────────────────────────────────────────────────
+function update() {
+    if (gameState !== 'playing') return;
 
-            // Fondo Parallax
-            ctx.fillStyle = '#161a1d';
-            for(let i=0; i<30; i++) ctx.fillRect((i*750) - state.parallaxX, 50, 600, 650);
+    // Player movement
+    const spd = keys['ArrowRight'] || keys['ArrowLeft'] ? (keys['Space'] ? 5.5 : 4.8) : 0;
+    if (keys['ArrowRight']) { player.vx = spd; player.facing = 1; }
+    else if (keys['ArrowLeft']) { player.vx = -spd; player.facing = -1; }
+    else player.vx *= 0.8;
 
-            // Suelo
-            ctx.fillStyle = '#34495e'; ctx.fillRect(0 - state.cameraX, 650, 20000, 70);
-            
-            // Objetos
-            items.bags.forEach(b => {
-                ctx.fillStyle = b.done ? '#f1c40f' : '#111';
-                ctx.beginPath(); ctx.ellipse(b.x - state.cameraX, 640, 40, 50, 0, 0, 7); ctx.fill();
+    // Jump
+    if ((keys['Space'] || keys['ArrowUp']) && player.grounded) {
+        player.vy = -13; player.grounded = false;
+    }
+
+    // Bite
+    if (keys['KeyZ'] && player.isBiting === 0) player.isBiting = 28;
+
+    // Pee on bag
+    if (keys['ArrowDown'] && player.grounded && player.isPeeing === 0) {
+        items.bags.forEach(b => {
+            if (!b.done && Math.abs((player.x + player.w/2) - b.x) < 40) {
+                b.done = true; player.isPeeing = 40;
+                addScore(5);
+            }
+        });
+    }
+
+    // Physics
+    player.vy += 0.7;
+    player.x += player.vx;
+    player.y += player.vy;
+
+    // Ground collision
+    if (player.y >= GROUND_Y - player.h) {
+        player.y = GROUND_Y - player.h; player.vy = 0; player.grounded = true;
+    }
+    if (player.x < 0) player.x = 0;
+
+    cameraX = Math.max(0, Math.min(2700, player.x - 220));
+
+    // Pickup bones
+    items.bones.forEach(b => {
+        if (!b.done && Math.abs((player.x + player.w/2) - b.x) < 36) {
+            b.done = true;
+            if (health < 3) health++;
+            else addScore(10);
+        }
+    });
+
+    // Enemies
+    enemies.filter(e => e.alive).forEach(en => {
+        en.x += en.speed * en.dir;
+        if (en.x > 2450 || en.x < 50) en.dir *= -1;
+
+        // Player vs enemy
+        if (player.invul <= 0 && rectsOverlap(player, en)) takeDamage();
+
+        // Bite
+        if (player.isBiting > 20) {
+            const biteX = player.x + (player.facing > 0 ? player.w + 10 : -60);
+            if (Math.abs(biteX - en.x) < 65 && Math.abs(player.y - en.y) < 60) {
+                en.x += player.facing * 100;
+                en.alive = false;
+                addScore(15);
+            }
+        }
+        if (en.hitTimer > 0) en.hitTimer--;
+    });
+
+    // Boss logic
+    if (player.x > 2200) boss.active = true;
+    if (boss.active && boss.hp > 0) {
+        boss.timer++;
+        if (boss.timer % 120 === 0) boss.vy = -14;
+        boss.vy += 0.6; boss.y += boss.vy;
+        if (boss.y >= GROUND_Y - boss.h) { boss.y = GROUND_Y - boss.h; boss.vy = 0; }
+        boss.facing = player.x < boss.x ? -1 : 1;
+        boss.x += (player.x < boss.x ? -1 : 1) * 1.6;
+        boss.x = Math.max(2400, Math.min(2850, boss.x));
+
+        if (player.invul <= 0 && rectsOverlap(player, {x:boss.x,y:boss.y,w:boss.w,h:boss.h})) takeDamage();
+
+        if (player.isBiting > 20) {
+            const biteX = player.x + (player.facing > 0 ? player.w + 10 : -70);
+            if (Math.abs(biteX - boss.x) < 100 && Math.abs(player.y - boss.y) < 90) {
+                boss.hp--; player.isBiting = 0; boss.x += player.facing * 60;
+                if (boss.hp <= 0) { gameState = 'won'; }
+            }
+        }
+    }
+
+    // Dog house — trigger win after boss is dead
+    if (boss.hp <= 0 && player.x + player.w > items.doghouse.x && gameState === 'playing') {
+        gameState = 'won';
+    }
+
+    // Timers
+    if (player.invul > 0) player.invul--;
+    if (player.isBiting > 0) player.isBiting--;
+    if (player.isPeeing > 0) player.isPeeing--;
+
+    updateHUD();
+}
+
+function rectsOverlap(a, b) {
+    const margin = 12;
+    return a.x + margin < b.x + b.w - margin &&
+           a.x + a.w - margin > b.x + margin &&
+           a.y + margin < b.y + b.h - margin &&
+           a.y + a.h - margin > b.y + margin;
+}
+
+function addScore(pts) {
+    score += pts;
+    if (score >= 100) { score -= 100; lives++; }
+}
+
+function takeDamage() {
+    health--; player.invul = 80;
+    if (health <= 0) {
+        lives--; health = 3;
+        player.x = Math.max(80, cameraX - 60);
+        player.y = GROUND_Y - player.h;
+        if (lives < 0) gameState = 'gameover';
+    }
+}
+
+function updateHUD() {
+    document.getElementById('ui-score').textContent = String(score).padStart(3, '0');
+    document.getElementById('ui-lives').textContent = lives;
+    document.getElementById('ui-health').textContent = '❤'.repeat(Math.max(0, health));
+}
+
+// ── DRAW ──────────────────────────────────────────────────────
+function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    if (gameState === 'start')     { drawStartScreen(); return; }
+    if (gameState === 'charSelect'){ drawCharSelect(); return; }
+    if (gameState === 'loading')   { drawLoading(); return; }
+    if (gameState === 'won')       { drawWorld(); drawWin(); return; }
+    if (gameState === 'gameover')  { drawGameOver(); return; }
+
+    drawWorld();
+}
+
+function drawWorld() {
+    // Sky gradient
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#0d1b2a'); sky.addColorStop(1, '#1a2a3a');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+
+    ctx.save(); ctx.translate(-cameraX, 0);
+
+    const LEVEL_W = 3200;
+
+    // Buildings
+    for (let i = 0; i < 14; i++) {
+        const bx = i * 240, bh = 80 + (i % 3) * 40;
+        ctx.fillStyle = ['#1c2833','#1a252f','#212f3d'][i%3];
+        ctx.fillRect(bx, H - bh - 32, 180, bh);
+        // Windows
+        for (let wy = H - bh - 20; wy < H - 42; wy += 22) {
+            for (let wx = bx + 10; wx < bx + 160; wx += 28) {
+                ctx.fillStyle = Math.random() > 0.4 ? '#f9ca24' : '#2c3e50';
+                ctx.fillRect(wx, wy, 14, 12);
+            }
+        }
+    }
+
+    // Ground / sidewalk
+    ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, GROUND_Y, LEVEL_W, H - GROUND_Y);
+    ctx.fillStyle = '#34495e'; ctx.fillRect(0, GROUND_Y, LEVEL_W, 8);
+    // Sidewalk lines
+    ctx.strokeStyle = '#3d5166'; ctx.lineWidth = 2;
+    for (let lx = 0; lx < LEVEL_W; lx += 80) {
+        ctx.beginPath(); ctx.moveTo(lx, GROUND_Y); ctx.lineTo(lx, H); ctx.stroke();
+    }
+
+    // Street lamps
+    for (let i = 0; i < 15; i++) {
+        const lx = i * 220 + 30;
+        ctx.fillStyle = '#566573'; ctx.fillRect(lx, GROUND_Y - 140, 5, 140);
+        ctx.fillStyle = '#566573'; ctx.fillRect(lx - 15, GROUND_Y - 140, 22, 5);
+        // Glow
+        const grd = ctx.createRadialGradient(lx - 8, GROUND_Y - 140, 2, lx - 8, GROUND_Y - 140, 30);
+        grd.addColorStop(0, 'rgba(255,230,100,0.5)'); grd.addColorStop(1, 'rgba(255,230,100,0)');
+        ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(lx - 8, GROUND_Y - 140, 30, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Trash bags
+    items.bags.forEach(b => {
+        ctx.fillStyle = b.done ? '#f39c12' : '#1a1a1a';
+        ctx.beginPath(); ctx.ellipse(b.x, GROUND_Y - 8, 18, 16, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = b.done ? '#e67e22' : '#333';
+        ctx.fillRect(b.x - 5, GROUND_Y - 24, 10, 8);
+    });
+
+    // Bones
+    items.bones.forEach(b => {
+        if (!b.done) {
+            ctx.fillStyle = '#ecf0f1';
+            ctx.fillRect(b.x - 10, GROUND_Y - 16, 20, 8);
+            [b.x - 12, b.x + 8].forEach(bx => {
+                ctx.beginPath(); ctx.arc(bx, GROUND_Y - 12, 5, 0, Math.PI * 2); ctx.fill();
             });
+        }
+    });
 
-            // Personajes
-            enemies.forEach(en => drawSprite(en.img, en.x, en.y, 140, en.f, en.dir, '#e74c3c'));
-            if (boss.active) drawSprite(boss.img, boss.x, 420, 300, player.frame, -1, '#f1c40f');
-            if (player.invul % 4 < 2) {
-                const currentImg = player.sprites[player.anim] || player.sprites.idle;
-                drawSprite(currentImg, player.x, player.y, player.w, player.frame, player.facing, '#3498db');
-            }
+    // Dog House
+    if (boss.hp <= 0 || player.x > 2700) {
+        const dh = items.doghouse;
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(dh.x, GROUND_Y - dh.h, dh.w, dh.h);
+        ctx.fillStyle = '#A0522D';
+        ctx.beginPath(); ctx.moveTo(dh.x - 8, GROUND_Y - dh.h); ctx.lineTo(dh.x + dh.w/2, GROUND_Y - dh.h - 30); ctx.lineTo(dh.x + dh.w + 8, GROUND_Y - dh.h); ctx.fill();
+        ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(dh.x + dh.w/2, GROUND_Y - dh.h/2, 20, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // ── CHARACTERS ──
+    // Enemies
+    enemies.filter(e => e.alive).forEach(en => {
+        let anim;
+        if (en.hitTimer > 0)          anim = pickAnim(en.charKey, 'hit');
+        else if (Math.abs(en.speed) > 1.8) anim = 'run';
+        else                          anim = 'walk';
+        drawChar(en.id, en.charKey, anim, 14, true, en.x, en.y, en.w, en.h, en.dir);
+    });
+
+    // Boss
+    if (boss.active && boss.hp > 0) {
+        const bossAnim = boss.vy < -2 ? 'jump' : 'walk';
+        drawChar('boss', 'akita', bossAnim, 10, true, boss.x, boss.y, boss.w, boss.h, boss.facing);
+        // Boss HP bar
+        const bw = 120, bx = boss.x + boss.w/2 - bw/2;
+        ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(bx - 2, boss.y - 18, bw + 4, 10);
+        ctx.fillStyle = '#e74c3c'; ctx.fillRect(bx, boss.y - 16, (boss.hp / boss.maxHp) * bw, 6);
+        ctx.fillStyle = '#f39c12'; ctx.font = '6px "Press Start 2P"'; ctx.textAlign = 'center';
+        ctx.fillText('AKITA FIRE', boss.x + boss.w/2, boss.y - 22); ctx.textAlign = 'left';
+    }
+
+    // Player
+    if (player.invul <= 0 || Math.floor(player.invul / 6) % 2 === 0) {
+        let pAnim = 'idle';
+        if (player.isPeeing > 0)       pAnim = pickAnim(selectedChar, 'pee');
+        else if (player.isBiting > 0)  pAnim = pickAnim(selectedChar, 'bite');
+        else if (!player.grounded)     pAnim = 'jump';
+        else if (Math.abs(player.vx) > 3.5) pAnim = 'run';
+        else if (Math.abs(player.vx) > 0.4) pAnim = 'walk';
+        const fpsMap = { idle:6, walk:12, run:18, jump:10, custom:10, make_pee:10, realy_make_a_pee:10, dog_bite:14, bite:14, scratch_cat:14 };
+        const pFps = fpsMap[pAnim] || 12;
+        const pLoop = !['jump'].includes(pAnim);
+        drawChar('player', selectedChar, pAnim, pFps, pLoop, player.x, player.y, player.w, player.h, player.facing);
+    }
+
+    // FX
+    if (player.isPeeing > 0) {
+        ctx.fillStyle = `rgba(241,196,15,${player.isPeeing/40})`;
+        for (let i = 0; i < 5; i++) ctx.fillRect(player.x + (player.facing>0?player.w-5:-5), player.y + player.h - 5 + Math.random()*10, 3, 3);
+    }
+    if (player.isBiting > 18) {
+        ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(player.x + player.facing * (player.w + 18), player.y + player.h * 0.4, 20, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+    }
+
+    ctx.restore();
+}
+
+// ── SCREEN STATES ─────────────────────────────────────────────
+function drawStartScreen() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0d1b2a'); g.addColorStop(1, '#1a2a3a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    // Title
+    ctx.shadowColor = '#f39c12'; ctx.shadowBlur = 20;
+    ctx.fillStyle = '#f39c12'; ctx.font = 'bold 28px "Press Start 2P"';
+    ctx.textAlign = 'center'; ctx.fillText('URBAN DOG', W/2, 100);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ecf0f1'; ctx.font = '9px "Press Start 2P"';
+    ctx.fillText('STREET KING', W/2, 125);
+
+    // Mini rules
+    ctx.fillStyle = '#7f8c8d'; ctx.font = '7px "Press Start 2P"';
+    const rules = ['↓ Orina bolsas: +5 pts','Huesos: cura o +10 pts','Z Muerde enemigos','100 pts = vida extra'];
+    rules.forEach((r, i) => ctx.fillText(r, W/2, 175 + i * 18));
+
+    // Blink
+    if (Math.floor(Date.now() / 600) % 2 === 0) {
+        ctx.fillStyle = '#fff'; ctx.font = '8px "Press Start 2P"';
+        ctx.fillText('CLICK O TAP PARA JUGAR', W/2, H - 40);
+    }
+    ctx.textAlign = 'left';
+}
+
+function drawCharSelect() {
+    charSelectFrame++;
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0d1b2a'); g.addColorStop(1, '#1a2a3a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = '#f39c12'; ctx.font = '10px "Press Start 2P"';
+    ctx.textAlign = 'center'; ctx.fillText('ELIGE TU PERRO', W/2, 35);
+
+    const cards = [
+        { key: 'zorro', x: 60,    label: 'ZORRO',  desc: '★ VELOZ / ÁGIL',    color: '#f39c12' },
+        { key: 'dali',  x: W/2+20, label: 'DALÍ',   desc: '◆ EQUILIBRADO',     color: '#9b59b6' },
+    ];
+
+    cards.forEach((c, i) => {
+        const selected = i === charCursor;
+        const cx = c.x, cy = 55, cw = W/2 - 40, ch = H - 100;
+
+        // Card background
+        ctx.fillStyle = selected ? 'rgba(243,156,18,0.15)' : 'rgba(255,255,255,0.04)';
+        ctx.strokeStyle = selected ? c.color : '#444';
+        ctx.lineWidth = selected ? 3 : 1;
+        ctx.beginPath(); ctx.roundRect(cx, cy, cw, ch, 8); ctx.fill(); ctx.stroke();
+
+        // Sprite preview (animated)
+        const previewY = cy + 20;
+        const previewFrame = animTick(`select_${c.key}`, 'idle', 6, true);
+        if (!drawSprite(c.key, 'idle', previewFrame, cx + cw/2 - 50, previewY, 100, 100, 1)) {
+            drawDogGeo(cx + cw/2 - 36, previewY + 10, 72, 72, 1, CHARS_CONFIG[c.key].color, 'hero');
         }
 
-        function loop() { update(); draw(); requestAnimationFrame(loop); }
-        
-        window.onload = () => {
-            const hScore = localStorage.getItem('uDogHighScore') || 0;
-            const mLevel = localStorage.getItem('uDogMaxLevel') || 1;
-            document.getElementById('high-score').innerText = hScore;
-            document.getElementById('max-level').innerText = mLevel;
-            loop();
-        };
-    </script>
+        // Labels
+        ctx.fillStyle = c.color; ctx.font = '9px "Press Start 2P"';
+        ctx.fillText(c.label, cx + cw/2, cy + 140);
+        ctx.fillStyle = '#bdc3c7'; ctx.font = '6px "Press Start 2P"';
+        ctx.fillText(c.desc, cx + cw/2, cy + 158);
+
+        if (selected) {
+            ctx.fillStyle = c.color; ctx.font = '7px "Press Start 2P"';
+            ctx.fillText('▼ SELECCIONAR', cx + cw/2, cy + ch - 16);
+        }
+    });
+
+    ctx.fillStyle = '#7f8c8d'; ctx.font = '7px "Press Start 2P"';
+    ctx.fillText('CLICK/TAP IZQUIERDA O DERECHA', W/2, H - 12);
+    ctx.textAlign = 'left';
+}
+
+function drawLoading() {
+    ctx.fillStyle = '#0d1b2a'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#f39c12'; ctx.font = '10px "Press Start 2P"';
+    ctx.textAlign = 'center'; ctx.fillText(loadingMsg, W/2, H/2 - 10);
+
+    // Loading bar animation
+    const bw = 240, bx = W/2 - bw/2;
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+    ctx.strokeRect(bx, H/2 + 10, bw, 12);
+    ctx.fillStyle = '#f39c12';
+    const prog = (Math.sin(Date.now() / 300) + 1) / 2;
+    ctx.fillRect(bx + 2, H/2 + 12, (bw - 4) * prog, 8);
+    ctx.textAlign = 'left';
+}
+
+function drawWin() {
+    ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#f39c12'; ctx.font = '18px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#f39c12'; ctx.shadowBlur = 20;
+    ctx.fillText('¡VICTORIA!', W/2, H/2 - 30);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ecf0f1'; ctx.font = '8px "Press Start 2P"';
+    ctx.fillText(`PUNTOS: ${String(score).padStart(3,'0')}`, W/2, H/2 + 5);
+    ctx.fillText('BARRIO CONQUISTADO 🏆', W/2, H/2 + 25);
+    if (Math.floor(Date.now()/600)%2===0) { ctx.fillStyle='#fff'; ctx.fillText('CLICK PARA REINICIAR',W/2,H/2+55); }
+    ctx.textAlign = 'left';
+}
+
+function drawGameOver() {
+    ctx.fillStyle = '#0d1b2a'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#e74c3c'; ctx.font = '18px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#e74c3c'; ctx.shadowBlur = 20;
+    ctx.fillText('GAME OVER', W/2, H/2 - 20);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#7f8c8d'; ctx.font = '8px "Press Start 2P"';
+    ctx.fillText(`PUNTOS FINALES: ${score}`, W/2, H/2 + 10);
+    if (Math.floor(Date.now()/600)%2===0) { ctx.fillStyle='#fff'; ctx.fillText('CLICK PARA REINTENTAR',W/2,H/2+40); }
+    ctx.textAlign = 'left';
+}
+
+// ── GAME LOOP ─────────────────────────────────────────────────
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
 </body>
 </html>
