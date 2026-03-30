@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Urban Dog: Drive King</title>
+    <title>Urban Dog: Street King</title>
     
+    <!-- Configuración para App Mobile / PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
@@ -19,6 +20,7 @@
             --ui-blue: #3498db;
         }
 
+        /* Estilos Base */
         * { box-sizing: border-box; -webkit-touch-callout: none; user-select: none; outline: none; }
         
         body { 
@@ -34,6 +36,7 @@
         #game-container { position: relative; flex-grow: 1; background: #1e272e; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; image-rendering: auto; }
         
+        /* Overlays (Menús) */
         .overlay { 
             position: absolute; inset: 0; background: rgba(0,0,0,0.95); 
             display: flex; flex-direction: column; align-items: center; 
@@ -43,32 +46,34 @@
         .char-select { display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
         .char-card { 
             background: #2c3e50; padding: 15px; border-radius: 20px; border: 4px solid #444; 
-            cursor: pointer; transition: transform 0.2s; width: 150px; 
+            cursor: pointer; transition: 0.2s; width: 160px; 
         }
         .char-card:active { transform: scale(0.95); }
-        .char-card img { width: 90px; height: 90px; border-radius: 15px; margin-bottom: 10px; background: #161a1d; object-fit: contain; }
+        .char-card:hover { border-color: var(--ui-gold); }
+        .char-card img { width: 100px; height: 100px; border-radius: 15px; margin-bottom: 10px; background: #161a1d; object-fit: contain; }
         
+        /* HUD */
         .hud { 
-            position: absolute; top: calc(15px + env(safe-area-inset-top)); left: 15px; right: 15px; 
+            position: absolute; top: calc(15px + env(safe-area-inset-top, 0px)); left: 15px; right: 15px; 
             display: flex; justify-content: space-between; font-size: 14px; pointer-events: none; z-index: 50; 
         }
-
         .stat-box { background: rgba(0,0,0,0.8); padding: 10px 15px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.1); text-align: center; }
 
-        #boss-ui { position: absolute; top: 110px; left: 50%; transform: translateX(-50%); width: 70%; display: none; text-align: center; }
+        /* Jefe */
+        #boss-ui { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); width: 70%; display: none; text-align: center; }
         .hp-bar { height: 14px; background: #333; border: 2px solid #fff; border-radius: 7px; margin-top: 5px; overflow: hidden; }
         #hp-fill { height: 100%; background: var(--ui-red); width: 100%; transition: width 0.3s; }
         
+        /* Controles Móviles */
         .controls-panel { 
-            width: 100%; padding: calc(10px + env(safe-area-inset-bottom)) 20px 20px 20px;
+            width: 100%; padding: 15px 20px;
             display: flex; justify-content: space-between; align-items: center;
             background: #161a1d; border-top: 4px solid #222;
         }
-
         .d-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .action-btns { display: flex; gap: 15px; }
         .btn-ui { 
-            width: 65px; height: 65px; background: #34495e; border: none; border-radius: 22px; 
+            width: 70px; height: 70px; background: #34495e; border: none; border-radius: 22px; 
             color: white; font-size: 24px; box-shadow: 0 6px 0 #1b2631; cursor: pointer; 
             display: flex; align-items: center; justify-content: center; 
         }
@@ -77,36 +82,40 @@
         .btn-pee { background: var(--ui-gold); color: #000; box-shadow: 0 6px 0 #a68b0a; }
         .btn-bite { background: var(--ui-red); box-shadow: 0 6px 0 #922b21; }
         .btn-jump { background: var(--ui-blue); box-shadow: 0 6px 0 #21618c; }
+
+        .record-info { color: var(--ui-gold); font-size: 14px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
     <div id="game-wrapper">
+        <!-- Pantalla de Inicio -->
         <div id="start-screen" class="overlay">
             <h1 style="color: var(--ui-gold); font-size: 36px; margin-bottom: 5px;">URBAN DOG</h1>
-            <p style="color: #aaa; margin-bottom: 20px;">ELIGE TU HÉROE</p>
-            
+            <p>ELIGE TU HÉROE</p>
+            <div id="local-records" class="record-info">RÉCORD: <span id="high-score">0</span></div>
             <div class="char-select">
                 <div class="char-card" onclick="selectChar('zorro')">
-                    <!-- Eliminado crossorigin para evitar bloqueos del navegador en las previsualizaciones -->
-                    <img id="img-zorro-preview" src="https://via.placeholder.com/100?text=Zorro">
+                    <img id="prev-zorro" src="https://via.placeholder.com/100?text=Zorro">
                     <div>ZORRO</div>
                     <small style="color: var(--ui-gold);">VELOCIDAD +++</small>
                 </div>
                 <div class="char-card" onclick="selectChar('dali')">
-                    <img id="img-dali-preview" src="https://via.placeholder.com/100?text=Dali">
+                    <img id="prev-dali" src="https://via.placeholder.com/100?text=Dali">
                     <div>DALÍ</div>
                     <small style="color: var(--ui-blue);">SALTO +++</small>
                 </div>
             </div>
-            <p style="font-size: 12px; color: #555; margin-top: 20px;">Sincronizado con Google Drive Assets</p>
+            <p style="font-size: 10px; color: #777; margin-top: 20px;">Los personajes cargarán al seleccionar uno.</p>
         </div>
 
+        <!-- Game Over -->
         <div id="game-over-screen" class="overlay" style="display:none;">
             <h1 style="color: var(--ui-red); font-size: 42px;">¡CAÍSTE!</h1>
             <button class="btn-ui" style="width: 220px; height: 60px;" onclick="location.reload()">REINTENTAR</button>
         </div>
 
+        <!-- Área de Juego -->
         <div id="game-container">
             <div class="hud">
                 <div class="stat-box">BARRIO: <span id="ui-level">1</span><br>PTS: <span id="ui-score">000</span></div>
@@ -119,15 +128,16 @@
             <canvas id="gameCanvas"></canvas>
         </div>
 
+        <!-- Controles -->
         <div class="controls-panel">
             <div class="d-pad">
-                <button class="btn-ui" id="ctrlLeft">←</button>
-                <button class="btn-ui btn-pee" id="ctrlDown">💧</button>
-                <button class="btn-ui" id="ctrlRight">→</button>
+                <button class="btn-ui" id="btnLeft">←</button>
+                <button class="btn-ui btn-pee" id="btnDown">💧</button>
+                <button class="btn-ui" id="btnRight">→</button>
             </div>
             <div class="action-btns">
-                <button class="btn-ui btn-action btn-bite" id="ctrlBite">MORDIDA</button>
-                <button class="btn-ui btn-action btn-jump" id="ctrlJump">SALTO</button>
+                <button class="btn-ui btn-action btn-bite" id="btnBite">MORDIDA</button>
+                <button class="btn-ui btn-action btn-jump" id="btnJump">SALTO</button>
             </div>
         </div>
     </div>
@@ -135,11 +145,11 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const GAME_W = 1280, GAME_H = 720;
-        canvas.width = GAME_W; canvas.height = GAME_H;
+        const GW = 1280, GH = 720;
+        canvas.width = GW; canvas.height = GH;
 
-        // URL segura para saltar el error de visualización de Google Drive
-        const getGdUrl = (id) => `https://drive.google.com/uc?export=view&id=${id}`;
+        // Función de carga robusta para Google Drive
+        const getGdUrl = (id) => `https://lh3.googleusercontent.com/d/${id}=w1000`;
 
         const ASSETS = {
             zorro: {
@@ -169,10 +179,10 @@
             }
         };
 
-        // Estado del Juego
-        let state = { level: 1, score: 0, health: 3, playing: false, cameraX: 0, worldW: 10000, parallaxX: 0 };
+        // Estado inicial
+        let state = { level: 1, score: 0, health: 3, playing: false, cameraX: 0, worldW: 8000, parallaxX: 0 };
         let player = { x: 200, y: 530, w: 160, h: 160, vx: 0, vy: 0, speed: 10, jump: -28, grounded: false, facing: 1, anim: 'idle', frame: 0, sprites: {}, invul: 0 };
-        let enemies = [], items = { bags: [], bones: [] }, boss = { active: false, hp: 20, maxHp: 20, x: 7500, defeated: false, img: null };
+        let enemies = [], items = { bags: [], bones: [] }, boss = { active: false, hp: 15, maxHp: 15, x: 6000, defeated: false, img: null };
         let images = {};
 
         function vibrate(d) { if (navigator.vibrate) navigator.vibrate(d); }
@@ -180,16 +190,17 @@
         function loadImg(id) {
             const url = getGdUrl(id);
             if (images[url]) return images[url];
-            const i = new Image(); 
-            // Eliminado crossOrigin = "anonymous" para evitar que el navegador bloquee la imagen por políticas de CORS
-            i.src = url; 
-            images[url] = i; 
+            const i = new Image();
+            i.crossOrigin = "anonymous";
+            i.src = url;
+            images[url] = i;
             return i;
         }
 
-        // Pre-cargar imágenes para el menú
-        document.getElementById('img-zorro-preview').src = getGdUrl(ASSETS.zorro.idle);
-        document.getElementById('img-dali-preview').src = getGdUrl(ASSETS.dali.idle);
+        // Cargar miniaturas
+        document.getElementById('prev-zorro').src = getGdUrl(ASSETS.zorro.idle);
+        document.getElementById('prev-dali').src = getGdUrl(ASSETS.dali.idle);
+        document.getElementById('high-score').innerText = localStorage.getItem('urbanDogHighScore') || 0;
 
         function selectChar(type) {
             const data = ASSETS[type];
@@ -197,27 +208,28 @@
                 idle: loadImg(data.idle), walk: loadImg(data.walk), run: loadImg(data.run),
                 jump: loadImg(data.jump), bite: loadImg(data.bite), pee: loadImg(data.pee)
             };
-            player.speed = (type === 'zorro') ? 14 : 10;
-            player.jump = (type === 'zorro') ? -28 : -38;
+            player.speed = type === 'zorro' ? 14 : 10;
+            player.jump = type === 'zorro' ? -28 : -38;
             boss.img = loadImg(ASSETS.enemies.akita);
             initLevel(1);
             document.getElementById('start-screen').style.display = 'none';
             state.playing = true;
+            loop();
         }
 
         function initLevel(lvl) {
             state.level = lvl; state.cameraX = 0;
             player.x = 200; player.y = 530;
-            boss.maxHp = 20 + (lvl * 5); boss.hp = boss.maxHp;
-            boss.defeated = false; boss.active = false; boss.x = 8000;
+            boss.maxHp = 15 + (lvl * 5); boss.hp = boss.maxHp;
+            boss.defeated = false; boss.active = false; boss.x = 6500;
             
             enemies = [];
             const types = ['rat', 'frenchie', 'pigeon', 'golden', 'gavilan', 'collie'];
-            for(let i=0; i<10 + lvl*2; i++) {
+            for(let i=0; i<8 + lvl*2; i++) {
                 const t = types[Math.floor(Math.random() * Math.min(lvl, types.length))];
                 enemies.push({ 
                     x: 1200 + (i * 850), type: t, img: loadImg(ASSETS.enemies[t]), 
-                    speed: (3 + Math.random()*4), dir: -1, f: Math.random()*25, 
+                    speed: (3 + Math.random()*3), dir: -1, f: Math.random()*25, 
                     y: t === 'gavilan' ? 150 : 530 
                 });
             }
@@ -225,161 +237,108 @@
             items.bones = Array.from({length: 6}, (_,i) => ({x: 1500 + i*1400, done: false}));
         }
 
-        // Controles unificados
-        const inputs = {};
+        // Inputs unificados
+        const keys = {};
         const bind = (id, k) => {
             const el = document.getElementById(id);
-            const s = (e) => { e.preventDefault(); inputs[k] = true; };
-            const e = (e) => { e.preventDefault(); inputs[k] = false; };
-            el.addEventListener('mousedown', s); el.addEventListener('touchstart', s);
-            el.addEventListener('mouseup', e); el.addEventListener('touchend', e);
+            el.onmousedown = el.ontouchstart = (e) => { e.preventDefault(); keys[k] = true; };
+            el.onmouseup = el.ontouchend = (e) => { e.preventDefault(); keys[k] = false; };
         };
-        bind('ctrlLeft', 'ArrowLeft'); bind('ctrlRight', 'ArrowRight'); bind('ctrlDown', 'ArrowDown'); bind('ctrlJump', 'Space'); bind('ctrlBite', 'KeyZ');
-        window.onkeydown = e => inputs[e.code] = true;
-        window.onkeyup = e => inputs[e.code] = false;
+        bind('btnLeft', 'ArrowLeft'); bind('btnRight', 'ArrowRight'); bind('btnDown', 'ArrowDown'); bind('btnJump', 'Space'); bind('btnBite', 'z');
+        window.onkeydown = e => keys[e.code] = true;
+        window.onkeyup = e => keys[e.code] = false;
 
         function update() {
             if (!state.playing) return;
 
-            // Player logic
             player.anim = 'idle';
-            if (inputs['ArrowRight']) { player.vx = player.speed; player.facing = 1; player.anim = 'run'; }
-            else if (inputs['ArrowLeft']) { player.vx = -player.speed; player.facing = -1; player.anim = 'run'; }
+            if (keys['ArrowRight']) { player.vx = player.speed; player.facing = 1; player.anim = 'run'; }
+            else if (keys['ArrowLeft']) { player.vx = -player.speed; player.facing = -1; player.anim = 'run'; }
             else { player.vx *= 0.82; }
 
-            if (inputs['Space'] && player.grounded) { player.vy = player.jump; player.grounded = false; vibrate(20); }
+            if (keys['Space'] && player.grounded) { player.vy = player.jump; player.grounded = false; }
             if (!player.grounded) player.anim = 'jump';
-            if (inputs['KeyZ']) player.anim = 'bite';
-            if (inputs['ArrowDown'] && player.grounded) player.anim = 'pee';
+            if (keys['z']) player.anim = 'bite';
+            if (keys['ArrowDown'] && player.grounded) player.anim = 'pee';
 
             player.vy += 1.8; player.x += player.vx; player.y += player.vy;
             if (player.y > 530) { player.y = 530; player.vy = 0; player.grounded = true; }
             if (player.x < 0) player.x = 0;
 
-            state.cameraX = Math.max(0, Math.min(state.worldW - GAME_W, player.x - 400));
+            state.cameraX = Math.max(0, Math.min(state.worldW - GW, player.x - 400));
             state.parallaxX = state.cameraX * 0.4;
             player.frame = (player.frame + 0.5) % 25;
 
-            // Bolsas (↓)
-            if (inputs['ArrowDown'] && player.grounded) {
-                items.bags.forEach(b => { 
-                    if (!b.done && Math.abs(player.x - b.x) < 80) { b.done = true; state.score += 5; vibrate(40); } 
-                });
-            }
-
-            // Huesos de Pollo (Reglas: Curar o Puntos)
+            // Mecánica Huesos y Bolsas
             items.bones.forEach(b => {
                 if (!b.done && Math.abs(player.x - b.x) < 80) {
                     b.done = true;
-                    vibrate(100);
-                    if (state.health < 3) {
-                        state.health++; // Cura
-                    } else {
-                        state.score += 20; // Puntos extra por salud llena
-                    }
+                    if (state.health < 3) state.health++; else state.score += 20;
                 }
             });
+            if (keys['ArrowDown'] && player.grounded) {
+                items.bags.forEach(b => { if (!b.done && Math.abs(player.x - b.x) < 80) { b.done = true; state.score += 5; } });
+            }
 
             // Enemigos
             enemies.forEach(en => {
                 en.x += en.speed * en.dir; if (en.x > state.worldW || en.x < 100) en.dir *= -1;
                 en.f = (en.f + 0.45) % 25;
-                if (player.invul <= 0 && Math.abs(player.x - en.x) < 80 && Math.abs(player.y - en.y) < 80 && !inputs['KeyZ']) {
-                    state.health--; player.invul = 60; vibrate([100, 50, 100]); player.vx = player.facing * -25;
-                    if (state.health <= 0) { state.playing = false; document.getElementById('game-over-screen').style.display = 'flex'; }
+                if (player.invul <= 0 && Math.abs(player.x - en.x) < 80 && Math.abs(player.y - en.y) < 80 && !keys['z']) {
+                    state.health--; player.invul = 60; player.vx = player.facing * -25;
+                    if (state.health <= 0) {
+                        const high = localStorage.getItem('urbanDogHighScore') || 0;
+                        if(state.score > high) localStorage.setItem('urbanDogHighScore', state.score);
+                        state.playing = false; document.getElementById('game-over-screen').style.display = 'flex';
+                    }
                 }
             });
 
             // Boss
-            if (player.x > 7000 && !boss.defeated) {
+            if (player.x > 5500 && !boss.defeated) {
                 boss.active = true; document.getElementById('boss-ui').style.display = 'block';
                 boss.x += (player.x < boss.x ? -2.5 : 2.5);
-                if (inputs['KeyZ'] && Math.abs(player.x - boss.x) < 220) {
+                if (keys['z'] && Math.abs(player.x - boss.x) < 220) {
                     boss.hp -= 0.15; document.getElementById('hp-fill').style.width = (boss.hp/boss.maxHp*100) + '%';
-                    if (boss.hp <= 0) { boss.defeated = true; boss.active = false; document.getElementById('boss-ui').style.display = 'none'; vibrate(400); }
+                    if (boss.hp <= 0) { boss.defeated = true; boss.active = false; document.getElementById('boss-ui').style.display = 'none'; }
                 }
             }
-            if (boss.defeated && player.x > state.worldW - 800) { initLevel(state.level + 1); }
 
             if (player.invul > 0) player.invul--;
             document.getElementById('ui-score').innerText = state.score.toString().padStart(3, '0');
             document.getElementById('ui-health').innerText = "❤".repeat(Math.max(0, state.health));
         }
 
-        function drawSprite(img, x, y, size, frame, facing, fallbackColor = '#3498db') {
+        function drawSprite(img, x, y, size, frame, facing, fallback = '#3498db') {
             const col = Math.floor(frame % 5), row = Math.floor(frame / 5);
             ctx.save();
-            // Corrección: La cámara ya se aplicó globalmente, solo trasladamos X e Y puros.
-            ctx.translate(x + (facing === -1 ? size : 0), y);
+            ctx.translate(x + (facing === -1 ? size : 0) - state.cameraX, y);
             ctx.scale(facing, 1);
-            
             if (img && img.complete && img.naturalWidth !== 0) {
                 ctx.drawImage(img, col * 256, row * 256, 256, 256, 0, 0, size, size);
             } else {
-                // Fallback visual claro en caso de que tarde en cargar la imagen
-                ctx.fillStyle = fallbackColor;
-                ctx.fillRect(size * 0.2, size * 0.2, size * 0.6, size * 0.6);
-                
-                // Deshacer la escala para que el texto de "Cargando" no se lea al revés
-                ctx.scale(facing, 1); 
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 16px Arial';
-                ctx.textAlign = 'center';
-                const textX = facing === -1 ? -size/2 : size/2;
-                ctx.fillText('CARGANDO', textX, size*0.55);
+                ctx.fillStyle = fallback; ctx.fillRect(0, size/4, size, size*0.75);
             }
             ctx.restore();
         }
 
         function draw() {
-            ctx.clearRect(0, 0, GAME_W, GAME_H);
+            ctx.clearRect(0, 0, GW, GH);
             if (!state.playing && state.health > 0) return;
-
-            // Fondo Parallax (Se mueve independiente a la cámara global)
             ctx.fillStyle = '#161a1d';
             for(let i=0; i<30; i++) ctx.fillRect((i*750) - state.parallaxX, 50, 600, 650);
-
-            // APLICACIÓN GLOBAL DE LA CÁMARA
-            ctx.save();
-            ctx.translate(-state.cameraX, 0);
-
-            // Suelo (Corrección: Eliminado el "-state.cameraX" erróneo)
-            ctx.fillStyle = '#34495e'; 
-            ctx.fillRect(0, 650, 20000, 70);
-            
-            // Items
+            ctx.fillStyle = '#34495e'; ctx.fillRect(0 - state.cameraX, 650, 20000, 70);
             items.bags.forEach(b => {
                 ctx.fillStyle = b.done ? '#f1c40f' : '#111';
-                ctx.beginPath(); ctx.ellipse(b.x, 640, 40, 50, 0, 0, 7); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(b.x - state.cameraX, 640, 40, 50, 0, 0, 7); ctx.fill();
             });
-            items.bones.forEach(b => {
-                if(!b.done) { 
-                    ctx.fillStyle = '#fff'; 
-                    ctx.beginPath(); 
-                    ctx.arc(b.x, 630, 10, 0, 7); 
-                    ctx.arc(b.x + 30, 630, 10, 0, 7); 
-                    ctx.fill(); 
-                    ctx.fillRect(b.x, 625, 30, 10);
-                }
-            });
-
-            // Personajes
+            items.bones.forEach(b => { if(!b.done) { ctx.fillStyle="#fff"; ctx.fillRect(b.x - state.cameraX, 630, 50, 20); } });
             enemies.forEach(en => drawSprite(en.img, en.x, en.y, 140, en.f, en.dir, '#e74c3c'));
             if (boss.active) drawSprite(boss.img, boss.x, 420, 300, player.frame, -1, '#f1c40f');
-            if (player.invul % 4 < 2) {
-                const currentImg = player.sprites[player.anim] || player.sprites.idle;
-                drawSprite(currentImg, player.x, player.y, player.w, player.frame, player.facing, '#3498db');
-            }
-
-            // Casa final
-            ctx.fillStyle = '#5d4037'; 
-            ctx.fillRect(state.worldW - 600, 450, 300, 200);
-            
-            ctx.restore();
+            if (player.invul % 4 < 2) drawSprite(player.sprites[player.anim] || player.sprites.idle, player.x, player.y, player.w, player.frame, player.facing, '#3498db');
         }
 
         function loop() { update(); draw(); requestAnimationFrame(loop); }
-        loop();
     </script>
 </body>
 </html>
