@@ -88,12 +88,13 @@
             
             <div class="char-select">
                 <div class="char-card" onclick="selectChar('zorro')">
-                    <img id="img-zorro-preview" src="https://via.placeholder.com/100?text=Zorro" crossorigin="anonymous">
+                    <!-- Eliminado crossorigin para evitar bloqueos del navegador en las previsualizaciones -->
+                    <img id="img-zorro-preview" src="https://via.placeholder.com/100?text=Zorro">
                     <div>ZORRO</div>
                     <small style="color: var(--ui-gold);">VELOCIDAD +++</small>
                 </div>
                 <div class="char-card" onclick="selectChar('dali')">
-                    <img id="img-dali-preview" src="https://via.placeholder.com/100?text=Dali" crossorigin="anonymous">
+                    <img id="img-dali-preview" src="https://via.placeholder.com/100?text=Dali">
                     <div>DALÍ</div>
                     <small style="color: var(--ui-blue);">SALTO +++</small>
                 </div>
@@ -137,8 +138,8 @@
         const GAME_W = 1280, GAME_H = 720;
         canvas.width = GAME_W; canvas.height = GAME_H;
 
-        // IDs de Google Drive que proporcionaste
-        const getGdUrl = (id) => `https://lh3.googleusercontent.com/d/${id}`;
+        // URL segura para saltar el error de visualización de Google Drive
+        const getGdUrl = (id) => `https://drive.google.com/uc?export=view&id=${id}`;
 
         const ASSETS = {
             zorro: {
@@ -179,7 +180,11 @@
         function loadImg(id) {
             const url = getGdUrl(id);
             if (images[url]) return images[url];
-            const i = new Image(); i.crossOrigin = "anonymous"; i.src = url; images[url] = i; return i;
+            const i = new Image(); 
+            // Eliminado crossOrigin = "anonymous" para evitar que el navegador bloquee la imagen por políticas de CORS
+            i.src = url; 
+            images[url] = i; 
+            return i;
         }
 
         // Pre-cargar imágenes para el menú
@@ -304,13 +309,24 @@
         function drawSprite(img, x, y, size, frame, facing, fallbackColor = '#3498db') {
             const col = Math.floor(frame % 5), row = Math.floor(frame / 5);
             ctx.save();
-            ctx.translate(x + (facing === -1 ? size : 0) - state.cameraX, y);
+            // Corrección: La cámara ya se aplicó globalmente, solo trasladamos X e Y puros.
+            ctx.translate(x + (facing === -1 ? size : 0), y);
             ctx.scale(facing, 1);
+            
             if (img && img.complete && img.naturalWidth !== 0) {
                 ctx.drawImage(img, col * 256, row * 256, 256, 256, 0, 0, size, size);
             } else {
+                // Fallback visual claro en caso de que tarde en cargar la imagen
                 ctx.fillStyle = fallbackColor;
-                ctx.fillRect(0, size/2, size, size/2);
+                ctx.fillRect(size * 0.2, size * 0.2, size * 0.6, size * 0.6);
+                
+                // Deshacer la escala para que el texto de "Cargando" no se lea al revés
+                ctx.scale(facing, 1); 
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                const textX = facing === -1 ? -size/2 : size/2;
+                ctx.fillText('CARGANDO', textX, size*0.55);
             }
             ctx.restore();
         }
@@ -319,23 +335,31 @@
             ctx.clearRect(0, 0, GAME_W, GAME_H);
             if (!state.playing && state.health > 0) return;
 
-            // Fondo Parallax
+            // Fondo Parallax (Se mueve independiente a la cámara global)
             ctx.fillStyle = '#161a1d';
             for(let i=0; i<30; i++) ctx.fillRect((i*750) - state.parallaxX, 50, 600, 650);
 
-            // Suelo
-            ctx.fillStyle = '#34495e'; ctx.fillRect(0 - state.cameraX, 650, 20000, 70);
+            // APLICACIÓN GLOBAL DE LA CÁMARA
+            ctx.save();
+            ctx.translate(-state.cameraX, 0);
+
+            // Suelo (Corrección: Eliminado el "-state.cameraX" erróneo)
+            ctx.fillStyle = '#34495e'; 
+            ctx.fillRect(0, 650, 20000, 70);
             
             // Items
             items.bags.forEach(b => {
                 ctx.fillStyle = b.done ? '#f1c40f' : '#111';
-                ctx.beginPath(); ctx.ellipse(b.x - state.cameraX, 640, 40, 50, 0, 0, 7); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(b.x, 640, 40, 50, 0, 0, 7); ctx.fill();
             });
             items.bones.forEach(b => {
                 if(!b.done) { 
                     ctx.fillStyle = '#fff'; 
-                    ctx.beginPath(); ctx.arc(b.x - state.cameraX, 630, 10, 0, 7); ctx.arc(b.x + 30 - state.cameraX, 630, 10, 0, 7); ctx.fill(); 
-                    ctx.fillRect(b.x - state.cameraX, 625, 30, 10);
+                    ctx.beginPath(); 
+                    ctx.arc(b.x, 630, 10, 0, 7); 
+                    ctx.arc(b.x + 30, 630, 10, 0, 7); 
+                    ctx.fill(); 
+                    ctx.fillRect(b.x, 625, 30, 10);
                 }
             });
 
@@ -348,7 +372,10 @@
             }
 
             // Casa final
-            ctx.fillStyle = '#5d4037'; ctx.fillRect(state.worldW - 600 - state.cameraX, 450, 300, 200);
+            ctx.fillStyle = '#5d4037'; 
+            ctx.fillRect(state.worldW - 600, 450, 300, 200);
+            
+            ctx.restore();
         }
 
         function loop() { update(); draw(); requestAnimationFrame(loop); }
